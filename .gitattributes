@@ -1,0 +1,8 @@
+# Treat .sp files as SPICE netlists, not SourcePawn
+*.sp linguist-language=SPICE
+*.spice linguist-language=SPICE
+
+# Optionally, exclude generated output files from language stats entirely
+*.gds linguist-vendored
+*.lib linguist-vendored
+*.lef linguist-vendored
