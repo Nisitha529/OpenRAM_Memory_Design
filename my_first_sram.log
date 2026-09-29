@@ -1,0 +1,40 @@
+[2026-09-29 03:05:10.893923] |==============================================================================|
+[2026-09-29 03:05:10.894390] |=========                      OpenRAM v1.2.49                       =========|
+[2026-09-29 03:05:10.894817] |=========                                                            =========|
+[2026-09-29 03:05:10.894980] |=========               VLSI Design and Automation Lab               =========|
+[2026-09-29 03:05:10.895099] |=========        Computer Science and Engineering Department         =========|
+[2026-09-29 03:05:10.895188] |=========            University of California Santa Cruz             =========|
+[2026-09-29 03:05:11.265846] |=========                                                            =========|
+[2026-09-29 03:05:11.266772] |=========          Usage help: openram-user-group@ucsc.edu           =========|
+[2026-09-29 03:05:11.267490] |=========        Development help: openram-dev-group@ucsc.edu        =========|
+[2026-09-29 03:05:11.268151] |=========                See LICENSE for license info                =========|
+[2026-09-29 03:05:11.268636] |==============================================================================|
+[2026-09-29 03:05:11.269297] ** Start: 09/29/2026 03:05:11
+[2026-09-29 03:05:11.269797] Technology: scn4m_subm
+[2026-09-29 03:05:11.270238] Total size: 8192 bits
+[2026-09-29 03:05:11.270808] Word size: 32
+Words: 256
+Banks: 1
+[2026-09-29 03:05:11.271189] RW ports: 1
+R-only ports: 0
+W-only ports: 0
+[2026-09-29 03:05:11.271552] DRC/LVS/PEX is only run on the top-level design to save run-time (inline_lvsdrc=True to do inline checking).
+[2026-09-29 03:05:11.272097] Performing simulation-based characterization with ngspice
+[2026-09-29 03:05:11.272490] Trimming netlist to speed up characterization (trim_netlist=False to disable).
+[2026-09-29 03:05:11.272867] Only generating nominal corner timing.
+[2026-09-29 03:05:11.273204] Words per row: None
+[2026-09-29 03:05:11.273531] Output files are: 
+[2026-09-29 03:05:11.273854] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.lvs
+[2026-09-29 03:05:11.274143] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.sp
+[2026-09-29 03:05:11.274424] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.v
+[2026-09-29 03:05:11.274720] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.lib
+[2026-09-29 03:05:11.275006] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.py
+[2026-09-29 03:05:11.275291] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.html
+[2026-09-29 03:05:11.275629] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.log
+[2026-09-29 03:05:11.275962] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.lef
+[2026-09-29 03:05:11.276317] /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/my_first_sram.gds
+[2026-09-29 03:05:33.340812] ** Submodules: 22.0 seconds
+[2026-09-29 03:05:33.366249] ** Placement: 0.0 seconds
+[2026-09-29 03:11:10.845626] ** Routing: 337.5 seconds
+[2026-09-29 03:11:13.255939] ERROR: file magic.py: line 245: Unable to find the total error line in Magic output.
+

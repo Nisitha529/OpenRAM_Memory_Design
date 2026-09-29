@@ -1,0 +1,178 @@
+VERSION 5.4 ;
+NAMESCASESENSITIVE ON ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+UNITS
+  DATABASE MICRONS 2000 ;
+END UNITS
+MACRO my_first_sram
+   CLASS BLOCK ;
+   SIZE 285.3 BY 424.2 ;
+   SYMMETRY X Y R90 ;
+   PIN din0[0]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  141.0 0.0 142.2 1.2 ;
+      END
+   END din0[0]
+   PIN din0[1]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  162.8 0.0 164.0 1.2 ;
+      END
+   END din0[1]
+   PIN addr0[0]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal3 ;
+         RECT  0.0 325.0 1.2 326.2 ;
+      END
+   END addr0[0]
+   PIN addr0[1]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  100.0 423.0 101.2 424.2 ;
+      END
+   END addr0[1]
+   PIN addr0[2]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  94.8 423.0 96.0 424.2 ;
+      END
+   END addr0[2]
+   PIN addr0[3]
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  97.4 423.0 98.6 424.2 ;
+      END
+   END addr0[3]
+   PIN csb0
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal3 ;
+         RECT  0.0 36.0 1.2 37.2 ;
+      END
+   END csb0
+   PIN web0
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal3 ;
+         RECT  0.0 58.0 1.2 59.2 ;
+      END
+   END web0
+   PIN clk0
+      DIRECTION INPUT ;
+      PORT
+         LAYER metal4 ;
+         RECT  84.2 0.0 85.4 1.2 ;
+      END
+   END clk0
+   PIN dout0[0]
+      DIRECTION OUTPUT ;
+      PORT
+         LAYER metal3 ;
+         RECT  284.1 124.0 285.3 125.2 ;
+      END
+   END dout0[0]
+   PIN dout0[1]
+      DIRECTION OUTPUT ;
+      PORT
+         LAYER metal3 ;
+         RECT  284.1 126.0 285.3 127.2 ;
+      END
+   END dout0[1]
+   PIN vdd
+      DIRECTION INOUT ;
+      USE POWER ; 
+      SHAPE ABUTMENT ; 
+      PORT
+         LAYER metal4 ;
+         RECT  279.3 0.0 285.3 424.2 ;
+         LAYER metal3 ;
+         RECT  0.0 0.0 285.3 6.0 ;
+         LAYER metal4 ;
+         RECT  0.0 0.0 6.0 424.2 ;
+         LAYER metal3 ;
+         RECT  0.0 418.2 285.3 424.2 ;
+      END
+   END vdd
+   PIN gnd
+      DIRECTION INOUT ;
+      USE GROUND ; 
+      SHAPE ABUTMENT ; 
+      PORT
+         LAYER metal4 ;
+         RECT  267.3 12.0 273.3 412.2 ;
+         LAYER metal3 ;
+         RECT  12.0 12.0 273.3 18.0 ;
+         LAYER metal3 ;
+         RECT  12.0 406.2 273.3 412.2 ;
+         LAYER metal4 ;
+         RECT  12.0 12.0 18.0 412.2 ;
+      END
+   END gnd
+   OBS
+   LAYER  metal1 ;
+      RECT  1.4 1.4 283.9 422.8 ;
+   LAYER  metal2 ;
+      RECT  1.4 1.4 283.9 422.8 ;
+   LAYER  metal3 ;
+      RECT  2.4 323.8 283.9 327.4 ;
+      RECT  1.4 38.4 2.4 56.8 ;
+      RECT  1.4 60.4 2.4 323.8 ;
+      RECT  2.4 122.8 282.9 126.4 ;
+      RECT  2.4 126.4 282.9 323.8 ;
+      RECT  282.9 128.4 283.9 323.8 ;
+      RECT  1.4 7.2 2.4 34.8 ;
+      RECT  282.9 7.2 283.9 122.8 ;
+      RECT  1.4 327.4 2.4 417.0 ;
+      RECT  2.4 7.2 10.8 10.8 ;
+      RECT  2.4 10.8 10.8 19.2 ;
+      RECT  2.4 19.2 10.8 122.8 ;
+      RECT  10.8 7.2 274.5 10.8 ;
+      RECT  10.8 19.2 274.5 122.8 ;
+      RECT  274.5 7.2 282.9 10.8 ;
+      RECT  274.5 10.8 282.9 19.2 ;
+      RECT  274.5 19.2 282.9 122.8 ;
+      RECT  2.4 327.4 10.8 405.0 ;
+      RECT  2.4 405.0 10.8 413.4 ;
+      RECT  2.4 413.4 10.8 417.0 ;
+      RECT  10.8 327.4 274.5 405.0 ;
+      RECT  10.8 413.4 274.5 417.0 ;
+      RECT  274.5 327.4 283.9 405.0 ;
+      RECT  274.5 405.0 283.9 413.4 ;
+      RECT  274.5 413.4 283.9 417.0 ;
+   LAYER  metal4 ;
+      RECT  138.6 3.6 144.6 422.8 ;
+      RECT  144.6 1.4 160.4 3.6 ;
+      RECT  97.6 3.6 103.6 420.6 ;
+      RECT  103.6 3.6 138.6 420.6 ;
+      RECT  103.6 420.6 138.6 422.8 ;
+      RECT  87.8 1.4 138.6 3.6 ;
+      RECT  166.4 1.4 276.9 3.6 ;
+      RECT  8.4 420.6 92.4 422.8 ;
+      RECT  8.4 1.4 81.8 3.6 ;
+      RECT  144.6 3.6 264.9 9.6 ;
+      RECT  144.6 9.6 264.9 414.6 ;
+      RECT  144.6 414.6 264.9 422.8 ;
+      RECT  264.9 3.6 275.7 9.6 ;
+      RECT  264.9 414.6 275.7 422.8 ;
+      RECT  275.7 3.6 276.9 9.6 ;
+      RECT  275.7 9.6 276.9 414.6 ;
+      RECT  275.7 414.6 276.9 422.8 ;
+      RECT  8.4 3.6 9.6 9.6 ;
+      RECT  8.4 9.6 9.6 414.6 ;
+      RECT  8.4 414.6 9.6 420.6 ;
+      RECT  9.6 3.6 20.4 9.6 ;
+      RECT  9.6 414.6 20.4 420.6 ;
+      RECT  20.4 3.6 97.6 9.6 ;
+      RECT  20.4 9.6 97.6 414.6 ;
+      RECT  20.4 414.6 97.6 420.6 ;
+   END
+END    my_first_sram
+END    LIBRARY
