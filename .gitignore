@@ -2,12 +2,12 @@
 # OpenRAM Project .gitignore
 # ============================================================
 
-# ---------- OpenRAM-generated outputs ----------
-# Layout files (can be very large)
-*.gds
-*.gds.gz
-*.mag
-*.mag.gz
+## ---------- OpenRAM-generated outputs ----------
+## Layout files (can be very large)
+#*.gds
+#*.gds.gz
+#*.mag
+#*.mag.gz
 
 # SPICE netlists and simulation outputs
 *.sp
@@ -19,11 +19,11 @@
 *.wave
 
 # Liberty, LEF, Verilog, and datasheet outputs
-*.lib
-*.lef
-*.html
-*.v
-*.sv
+# *.lib
+# *.lef
+# *.html
+# *.v
+# *.sv
 
 # Verification reports
 *.drc.results
@@ -134,3 +134,15 @@ desktop.ini
 # Local configs you don't want to commit
 local_config.py
 private_*.py
+# ---------- RISC-V + cache hierarchy flow ----------
+# Simulation outputs (sim/build/ is covered by build/ above)
+*.vcd
+*.vvp
+*.regs
+# Compiled test programs (rebuilt by sw/Makefile)
+sw/*.elf
+sw/*.bin
+sw/*.hex
+sw/*.dis
+# Layout experiments (see cache/sram_overrides/ for the ones that were adopted)
+cache/sram_variants/

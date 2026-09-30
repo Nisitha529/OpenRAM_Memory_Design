@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+"""Convert a raw little-endian binary into a $readmemh file of 32-bit words."""
+import sys
+
+data = open(sys.argv[1], "rb").read()
+data += b"\0" * (-len(data) % 4)
+with open(sys.argv[2], "w") as f:
+    for i in range(0, len(data), 4):
+        f.write("%08x\n" % int.from_bytes(data[i:i + 4], "little"))

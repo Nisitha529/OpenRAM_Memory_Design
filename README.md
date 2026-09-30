@@ -44,8 +44,11 @@ This project builds a minimal understanding of that full picture.
 - Simulating the generated SRAM with a simple SPICE testbench.
 - Designing or obtaining a basic cache controller RTL and simulating it with the generated SRAM model.
 
+- Integrating a 5-stage RV32I pipelined core with a two-level cache hierarchy
+  (L1I + L1D + unified L2) built from OpenCache RTL and OpenRAM macros.
+
 ### Out of Scope
-- Full RISC-V SoC integration.
+- Placing and routing the full SoC (OpenLane) – the macros are ready for it.
 - Advanced cache coherency protocols (MESI, MOESI).
 - Commercial PDKs (e.g., TSMC, GlobalFoundries).
 - Fabrication and silicon bring-up.
@@ -54,3 +57,173 @@ This project builds a minimal understanding of that full picture.
 ---
 
 ## Project Flow
+
+```
+ sw/*.S ──► RISC-V GCC ──► program image (.hex)
+                                   │
+ cache/configs/*.py ──► OpenCache ──► cache controller RTL (l1i.v, l1d.v, l2.v)
+                           │
+                           └──► SRAM configs ──► OpenRAM ──► SRAM macros (GDS, LEF, .lib, .v)
+                                                  (+ DRC / LVS)
+                                   │
+ rtl/core (RISC-V) + rtl/soc + rtl/mem ──► riscv_soc ──► sim/ (Icarus Verilog)
+```
+
+1. **Single SRAM** – `basic_config.py` builds one 32×256 SRAM (`runs/sram_32x256/`).
+2. **Caches** – OpenCache turns a cache description into controller RTL plus the
+   configs of the SRAMs it needs.
+3. **Macros** – `cache/build_srams.sh` compiles those SRAMs with OpenRAM
+   (DRC + LVS checked).
+4. **SoC** – the RISC-V core is connected to the caches (`rtl/soc/riscv_soc.v`).
+5. **Verification** – self-checking programs run on the core with perfect memories
+   and with the full cache hierarchy; results must be identical.
+
+---
+
+## Memory Hierarchy
+
+```
+            fetch                          load / store
+  core ───────────► L1I                 ───────────► L1D
+                    512 B, direct,                   512 B, direct,
+                    read-only                        write-back
+                      │ 128-bit lines                   │
+                      └────────► l2_arbiter ◄──────────┘   (L1D has priority)
+                                     │
+                                    L2   2 KB, 2-way, LRU, write-back
+                                     │ 256-bit lines
+                                     ▼
+                                   DRAM  (simulation model)
+```
+
+| Cache | Size | Line | Organisation | SRAMs (OpenRAM, scn4m_subm 0.35 µm) |
+|---|---|---|---|---|
+| L1I | 512 B | 16 B | direct-mapped, read-only | `l1i_tag_array` 10b×32, `sram_128x32_1r1w` |
+| L1D | 512 B | 16 B | direct-mapped, write-back | `l1d_tag_array` 11b×32, `sram_128x32_1r1w` (same macro as L1I) |
+| L2  | 2 KB | 32 B | 2-way, LRU, write-back | `l2_tag_array` 20b×32, 2× `l2_data_array` 256b×32, `l2_use_array` (flip-flops) |
+
+Notes:
+- OpenCache sizes are in **bits** and its addresses are **word** addresses. One L2
+  "word" is a whole L1 line, so an L1 miss is exactly one L2 request.
+- The core uses byte addresses; the caches see `addr[17:2]`, i.e. 256 KB.
+- The core freezes (all pipeline registers hold) whenever the instruction or data
+  it needs this cycle has not been delivered yet (`rtl/soc/riscv_soc.v`).
+
+---
+
+## Repository Layout
+
+| Path | Contents |
+|---|---|
+| `basic_config.py`, `runs/` | Single-SRAM experiment (32×256) |
+| `verify/` | Testbench + DRC script for the first 16×2 SRAM |
+| `rtl/core/` | RV32I 5-stage pipeline (imported from `riscv_pipelined_implt`, see below) |
+| `rtl/mem/` | `l2_arbiter.v`, `l2_use_array.v` (flip-flop LRU array) |
+| `rtl/soc/` | `riscv_soc.v`: core + L1I + L1D + arbiter + L2 |
+| `cache/configs/` | OpenCache configurations for L1I, L1D, L2 |
+| `cache/output/` | OpenCache results: controller RTL + SRAM configs |
+| `cache/build_srams.sh` | Builds every SRAM macro with OpenRAM into `cache/sram/` |
+| `cache/sram_overrides/` | Per-macro OpenRAM options (layout fixes) |
+| `cache/lvs_check.py` | LVS verdict from a netgen report (OpenRAM's rules) |
+| `sw/` | Self-checking RV32I test programs + linker script + Makefile |
+| `sim/` | Testbenches, DRAM model, `run.sh` |
+
+---
+
+## How to Run
+
+Tools: OpenRAM (Nix install in `~/OpenRAM`), OpenCache (`~/OpenCache`, system
+`python3` with Amaranth), Icarus Verilog, `riscv64-unknown-elf-gcc`.
+
+```bash
+# 1. Cache controller RTL + SRAM configs (seconds)
+cd ~/OpenCache/generator
+for c in l1i l1d l2; do python3 opencache.py <repo>/cache/configs/$c.py; done
+
+# 2. SRAM macros (about 15 minutes, 3 in parallel)
+<repo>/cache/build_srams.sh
+
+# 3. Simulation: unit test, both programs in both modes, register comparison
+<repo>/sim/run.sh all
+#    or one run:  sim/run.sh cached test_mem   /   sim/run.sh ideal test_core
+```
+
+OpenRAM configs need `use_nix = False`: otherwise OpenRAM starts Magic through
+`nix develop` from its temp directory, which has no `flake.nix`, and DRC fails with
+*"Unable to find the total error line in Magic output"*.
+
+---
+
+## Verification Results
+
+| Test | Ideal memories | L1I + L1D + L2 + DRAM |
+|---|---|---|
+| `tb_l1d` (2000 random accesses, L1D alone) | – | PASS, DRAM consistent after flush |
+| `test_core` (all instruction types, hazards) | PASS, 694 cycles | PASS, 942 cycles |
+| `test_mem` (4 KB traffic, L1/L2 conflicts) | PASS, 116848 cycles | PASS, 121696 cycles |
+
+For every cached run the testbench also checks that
+- the final register file is identical to the ideal run, and
+- after flushing L1D then L2, DRAM holds exactly every store the program made.
+
+`test_mem` in cached mode: 1674 L1D misses, 612 L1D write-backs, 248 L2 misses,
+131 L2 write-backs – every level of the hierarchy is exercised.
+
+---
+
+## SRAM Macro Status (layout checks)
+
+| Macro | Size (µm) | DRC | LVS | Notes |
+|---|---|---|---|---|
+| `l1i_tag_array` | 705 × 582 | 0 | match | |
+| `l1d_tag_array` | 758 × 582 | 0 | match | |
+| `l2_tag_array` | 972 × 582 | 0 | match | needs `words_per_row = 2` (`cache/sram_overrides/`); the default layout left one write driver's `w_en` unconnected |
+| `sram_128x32_1r1w` | 3085 × 855 | **2** | match | known issue, see below |
+| `l2_data_array` | 5989 × 983 | **2** | match | known issue, see below |
+| `l2_use_array` | – | – | – | flip-flops (`rtl/mem/l2_use_array.v`); the 2b×32 macro was 521 × 582 µm and had DRC errors |
+
+**Known issue – Metal3 spacing (Mosis 15.2) in the wide data arrays.** OpenRAM's
+router places a via2/via3 landing pad 0.1 µm from a horizontal Metal3 track in the
+routing channel at the bottom of the macro (rule: 0.6 µm). Function and LVS are
+unaffected, so simulation results are valid, but these two macros are not
+manufacturable as generated. Tried without success:
+- `perimeter_pins = False` – same errors.
+- `words_per_row = 2` – OpenRAM did not finish (stopped after 50 min).
+- Filling the gap with Metal3 – DRC improved but LVS showed a **short** to the
+  neighbouring net, so it was reverted. (Use `cache/lvs_check.py` for any manual
+  layout edit: it applies OpenRAM's top-level LVS rules.)
+- Narrower 64b×32 slices – the same flaw appears (plus one in Metal4), so it
+  would multiply the errors.
+
+A real fix needs the via moved in OpenRAM's router or a manual re-route in Magic,
+checked with DRC and LVS.
+
+---
+
+## Changes to the Imported RISC-V Core
+
+Source: `Vivado_projects/Pipelined_RISCv/riscv_pipe/riscv_pipelined_implt/src`
+(the original repository is unchanged). Each change is marked `CACHE:` or `FIX:`.
+
+**For the caches**
+- `freeze` input holds every pipeline register while a cache is busy.
+- `imem_addr` / `dreq_*` outputs present the next cycle's fetch and data access,
+  because the caches (synchronous SRAMs) answer one cycle after a request.
+- With `freeze = 0` and combinational memories the core behaves as before.
+
+**Bug fixes** (the original core fails `test_core`; it cannot even reach the
+failure report because every immediate is decoded wrongly)
+1. `datapath.v`: `extend` received `instrd[31:7]` but indexes a full 32-bit
+   instruction, so all immediates were wrong (`addi x1, x0, 15` gave 0).
+   `tb_extend` passes because it tests the unit on its own.
+2. `controller.v`: JALR target select used the decode-stage opcode; now registered
+   into execute.
+3. `controller.v`: branch condition used the decode-stage `funct3` (the *next*
+   instruction's); now registered into execute.
+4. `aludec.v` / `controller.v`: `blt/bge` now use `slt`, `bltu/bgeu` use `sltu`
+   (unsigned branches were compared as signed).
+5. `alu.v`: shifts use only `srcb[4:0]` (`srai` encodes bit 10 of the immediate).
+
+Not supported by the core (unchanged): byte/half-word loads and stores, `ecall`,
+CSRs, `fence`.
+

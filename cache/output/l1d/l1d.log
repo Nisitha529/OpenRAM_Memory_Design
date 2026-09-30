@@ -1,0 +1,36 @@
+[globals/init_opencache]: Initializing OpenCache...
+[globals/read_config]: Configuration file is /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output//../configs/l1d.py
+[globals/fix_config]: Output saved in /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/l1d/
+[globals/make_dir]: Creating output directory: /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/l1d/
+|==============================================================================|
+|=========                      OpenCache v0.0.1                      =========|
+|=========                                                            =========|
+|=========               VLSI Design and Automation Lab               =========|
+|=========        Computer Science and Engineering Department         =========|
+|=========            University of California Santa Cruz             =========|
+|=========                                                            =========|
+|=========          Usage help: openram-user-group@ucsc.edu           =========|
+|=========        Development help: openram-dev-group@ucsc.edu        =========|
+|=========                See LICENSE for license info                =========|
+|==============================================================================|
+** Start: 09/30/2026 14:38:37
+
+Cache type: Data
+Word size: 32
+Words per line: 4
+Number of ways: 1
+Replacement policy: None
+Write policy: Write-back
+Return type: Word
+Data hazard: True
+
+[cache_config/compute_configs]: Address tag size: 9 Address set size: 5 Address offset size: 2
+[cache_config/compute_configs]: Associativity: Direct-mapped
+Saving output files...
+Config: Writing to /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/l1d/sram_128x32_1r1w_config.py
+Config: Writing to /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/l1d/l1d_tag_array_config.py
+** Config: 0.0 seconds
+Verilog: Writing to /media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/l1d/l1d.v
+[design/add_logic_blocks]: Adding logic blocks...
+** Verilog: 0.2 seconds
+** End: 0.2 seconds
