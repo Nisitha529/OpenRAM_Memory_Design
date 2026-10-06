@@ -2,6 +2,9 @@
 //
 //   +define+IDEAL : core with perfect single-cycle memories (reference)
 //   default       : riscv_soc (core + L1I + L1D + L2) + DRAM model
+//   +define+GL    : the core is the synthesized gate-level netlist (flattened,
+//                   so the register file can't be dumped)
+//   +define+CLK_HALF=<ns> : half clock period (default 5 ns)
 //
 // Plusargs:
 //   +prog=<file.hex>   program image, one 32-bit word per line (from sw/)
@@ -18,8 +21,11 @@ module tb_soc;
   localparam TOHOST    = 32'h0003ff00;
   localparam LINE_WORDS = 8;               // 256-bit DRAM line
 
+`ifndef CLK_HALF
+  `define CLK_HALF 5
+`endif
   reg clk = 1, rst = 1;
-  always #5 clk = ~clk;
+  always #(`CLK_HALF) clk = ~clk;
 
   reg [31:0] image  [0:MEM_WORDS-1];       // program as loaded
   reg [31:0] shadow [0:MEM_WORDS-1];       // what memory should hold now
@@ -129,7 +135,7 @@ module tb_soc;
 `endif
 
     // reset for two cycles
-    #(19); rst = 0;
+    #(4*`CLK_HALF - 1); rst = 0;
 
     while (!done && cycles < max_cycles) @(posedge clk);
 
@@ -179,12 +185,14 @@ module tb_soc;
       $display("DRAM    : matches every committed store after L1D + L2 flush");
 `endif
 
+`ifndef GL
     if ($value$plusargs("regs=%s", regs_file)) begin
       fd = $fopen(regs_file, "w");
       for (i = 1; i < 32; i = i + 1)
         $fdisplay(fd, "x%0d %08h", i, `CORE.datapath_01.u_rf.rf[i]);
       $fclose(fd);
     end
+`endif
 
     $display("RESULT  : %0s", errors ? "FAIL" : "PASS");
     $display("------------------------------------------------------------");

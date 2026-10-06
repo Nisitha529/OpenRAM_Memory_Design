@@ -15,13 +15,7 @@ module aludec(
   always @(*) begin
     case (aluop)
       2'b00: alucontrol_reg = 4'b0000;
-      // FIX: branches. beq/bne subtract (use zero flag); blt/bge use slt and
-      // bltu/bgeu use sltu, so the result is 1 when rs1 < rs2 (zero flag = !lt).
-      2'b01: case (funct3[2:1])
-               2'b10:   alucontrol_reg = 4'b0101;   // blt, bge
-               2'b11:   alucontrol_reg = 4'b1000;   // bltu, bgeu
-               default: alucontrol_reg = 4'b0001;   // beq, bne
-             endcase
+      2'b01: alucontrol_reg = 4'b0001;   // branch (result unused: the datapath has a comparator)
       default: begin
         case (funct3)
           3'b000: alucontrol_reg  = rtypesub ? 4'b0001 : 4'b0000;

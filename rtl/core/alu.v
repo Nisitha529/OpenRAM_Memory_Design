@@ -2,9 +2,7 @@ module alu(
   input  [31:0] srca,
   input  [31:0] srcb,
   input  [3:0]  alucontrol,
-  output reg [31:0] aluresult,
-  output        zero,
-  output        sign
+  output reg [31:0] aluresult
 );
 
   wire [31:0] sum;
@@ -15,8 +13,6 @@ module alu(
                     (srca[31] ^ sum[31]) & 
                     (~alucontrol[1]);
 
-  assign zero = ~(|aluresult);
-  assign sign = aluresult[31];
 
   always @(*) begin
     casez (alucontrol)

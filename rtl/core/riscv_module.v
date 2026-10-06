@@ -36,8 +36,7 @@ module riscv_module(
   wire        alusrcae;
   wire        regwritem;
   wire        regwritew;
-  wire        zeroe;
-  wire        signe;
+  wire        eqe, lte, ltue;
   wire        pcjalsrce;
   wire        pcsrce;
   wire [1:0]  alusrcbe;
@@ -70,8 +69,9 @@ module riscv_module(
     .op            (instrd[6:0]),
     .funct3        (instrd[14:12]),
     .funct7b5      (instrd[30]),
-    .zeroe         (zeroe),
-    .signe         (signe),
+    .eqe           (eqe),
+    .lte           (lte),
+    .ltue          (ltue),
     .flushe        (flushe),
     .freeze        (freeze),
     .memwritee     (memwritee),
@@ -121,8 +121,9 @@ module riscv_module(
     .regwritew     (regwritew),
     .immsrcd       (immsrcd),
     .alucontrole   (alucontrole),
-    .zeroe         (zeroe),
-    .signe         (signe),
+    .eqe           (eqe),
+    .lte           (lte),
+    .ltue          (ltue),
     .pcf           (pcf),
     .instrf        (instrf),
     .instrd        (instrd),

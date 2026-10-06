@@ -4,8 +4,9 @@ module controller(
   input  [6:0] op,
   input  [2:0] funct3,
   input        funct7b5,
-  input        zeroe,
-  input        signe,
+  input        eqe,           // branch comparator (execute stage)
+  input        lte,
+  input        ltue,
   input        flushe,
   input        freeze,        // CACHE: hold all pipeline registers
   output       resultsrce0,
@@ -30,7 +31,7 @@ module controller(
   wire       branchd, branche, memwrited, jumpd, jumpe, jalre;
   wire       alusrcad, regwrited, regwritee;
   wire [1:0] alusrcbd;
-  wire       zeroop, signop, branchop;
+  wire       branchop;
   wire [2:0] funct3e;
 
   maindec md (
@@ -104,13 +105,21 @@ module controller(
   );
 
   assign resultsrce0  = resultsrce[0];
-  // FIX: the branch is resolved in execute, so use the execute-stage funct3
-  // (the original used the decode-stage one, i.e. the *next* instruction's).
-  // beq/bne: zero flag of rs1 - rs2. blt/bge/bltu/bgeu: ALU gives slt/sltu,
-  // so zero flag = !(rs1 < rs2).
-  assign zeroop       = zeroe ^ funct3e[0];
-  assign signop       = ~zeroe ^ funct3e[0];
-  assign branchop     = funct3e[2] ? signop : zeroop;
+  // Branch condition, resolved in execute with the execute-stage funct3 (the
+  // original used the decode-stage one, i.e. the *next* instruction's), from
+  // the dedicated comparator in the datapath:
+  //   000 beq  001 bne  100 blt  101 bge  110 bltu  111 bgeu
+  // Bit 0 of funct3 inverts the condition.
+  reg cond;
+  always @(*) begin
+    case (funct3e[2:1])
+      2'b00:   cond = eqe;
+      2'b10:   cond = lte;
+      2'b11:   cond = ltue;
+      default: cond = 1'b0;
+    endcase
+  end
+  assign branchop     = cond ^ funct3e[0];
   assign pcsrce       = (branche & branchop) | jumpe;
   // FIX: select the JALR target (rs1 + imm) when the JALR is in *execute*.
   // The original decoded this from the decode-stage opcode, so JALR jumped to

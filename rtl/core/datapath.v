@@ -9,8 +9,9 @@ module datapath(
   input             regwritew,
   input      [2:0]  immsrcd,
   input      [3:0]  alucontrole,
-  output            zeroe,
-  output            signe,
+  output            eqe,          // TIMING: rs1 == rs2 (forwarded operands)
+  output            lte,          // TIMING: rs1 <  rs2, signed
+  output            ltue,         // TIMING: rs1 <  rs2, unsigned
   output     [31:0] pcf,
   input      [31:0] instrf,
   output     [31:0] instrd,
@@ -180,10 +181,16 @@ module datapath(
     .srca       (srcae),
     .srcb       (srcbe),
     .alucontrol (alucontrole),
-    .aluresult  (aluresulte),
-    .zero       (zeroe),
-    .sign       (signe)
+    .aluresult  (aluresulte)
   );
+
+  // TIMING: dedicated branch comparator. Deciding branches from the ALU meant
+  // a 32-bit subtract followed by a 32-bit zero detect on the path to the next
+  // fetch address (the critical path after layout). Equality is only XORs and
+  // a reduction tree, and the less-than compares run in parallel with the ALU.
+  assign eqe  = (srcaefor == writedatae);
+  assign lte  = ($signed(srcaefor) < $signed(writedatae));
+  assign ltue = (srcaefor < writedatae);
 
   // ex-mem
   iex_imem u_iex_imem(

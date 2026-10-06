@@ -47,8 +47,10 @@ This project builds a minimal understanding of that full picture.
 - Integrating a 5-stage RV32I pipelined core with a two-level cache hierarchy
   (L1I + L1D + unified L2) built from OpenCache RTL and OpenRAM macros.
 
+- RTL-to-GDS implementation of the RISC-V core in sky130 with OpenLane 2.
+
 ### Out of Scope
-- Placing and routing the full SoC (OpenLane) – the macros are ready for it.
+- Placing and routing the full SoC with caches (needs sky130 SRAM macros).
 - Advanced cache coherency protocols (MESI, MOESI).
 - Commercial PDKs (e.g., TSMC, GlobalFoundries).
 - Fabrication and silicon bring-up.
@@ -127,6 +129,7 @@ Notes:
 | `cache/lvs_check.py` | LVS verdict from a netgen report (OpenRAM's rules) |
 | `sw/` | Self-checking RV32I test programs + linker script + Makefile |
 | `sim/` | Testbenches, DRAM model, `run.sh` |
+| `asic/riscv_core/` | OpenLane config, RTL sync script, release LEF / netlist / metrics |
 
 ---
 
@@ -200,6 +203,52 @@ checked with DRC and LVS.
 
 ---
 
+## ASIC Implementation of the Core (OpenLane 2, sky130)
+
+OpenLane 2.3.10 is installed in `/data/OpenLane` (see its README). The design runs
+in `/data/OpenLane/designs/riscv_core` on ext4, because this repository is on an
+NTFS drive; `sync_rtl.sh` copies `rtl/core/` there.
+
+```bash
+source /data/OpenLane/env.sh
+cd /data/OpenLane/designs/riscv_core && ./sync_rtl.sh
+ol config.json --run-tag <name>
+```
+
+Top: `riscv_module` (the core with its cache interface), `sky130_fd_sc_hd`,
+25 ns clock (40 MHz), 20 % I/O budget, all 9 PVT corners signed off.
+
+| Run | Change | Slow-corner setup WNS | Antenna nets | Notes |
+|---|---|---|---|---|
+| baseline | defaults | −3.03 ns | 31 | layout clean (DRC/LVS/XOR = 0) |
+| run2 | DELAY synthesis + heuristic diodes | −3.94 ns | 2 | 10 430 diodes → slew/fanout blow-up |
+| run3a/b | I/O budget 10 % / clock 30 ns | −3.92 / −4.57 ns | 27 / 34 | resizer only optimised the typical corner |
+| run4 | `DEFAULT_CORNER = max_ss`, post-GRT timing repair | −2.33 ns | 31 | |
+| **run5** | **RTL: dedicated branch comparator** + diodes > 300 µm | **+0.38 ns** | **10** | **release** |
+| run6 | + post-GRT design repair | +0.38 ns | 14 | no improvement |
+
+**Release (run5)** – `asic/riscv_core/release/`:
+
+| | |
+|---|---|
+| Die | 495 × 505 µm |
+| Cells | 15 384 (123 217 µm² of cells incl. fill/tap) |
+| Setup / hold | met at all 9 corners (worst setup +0.38 ns at ss 100 °C 1.6 V) |
+| Typical-corner slack | +8.1 ns → about 59 MHz at tt |
+| DRC (route / Magic / KLayout), LVS, XOR | 0 / 0 / 0, 0, 0 |
+| Power (tt) | ≈ 13 mW |
+| Open items | 10 antenna nets; max-slew pins at the slow corners only (timing already includes these slews); fanout > 10 on clock-tree leaves and repair buffers (an OpenLane guideline, not a sky130 rule) |
+
+The critical path was branch resolution: the branch was decided from the ALU
+(32-bit subtract + 32-bit zero detect) and then selected the next fetch address.
+A dedicated comparator (`eqe`/`lte`/`ltue` in `datapath.v`) removed it.
+
+**Gate-level verification** – the post-layout netlist with sky130 cell models
+(`sim/run.sh gl-all`) passes `test_core` and `test_mem`, with perfect memories and
+inside the L1I/L1D/L2 hierarchy. Timing is covered by sign-off STA.
+
+---
+
 ## Changes to the Imported RISC-V Core
 
 Source: `Vivado_projects/Pipelined_RISCv/riscv_pipe/riscv_pipelined_implt/src`
@@ -220,9 +269,14 @@ failure report because every immediate is decoded wrongly)
    into execute.
 3. `controller.v`: branch condition used the decode-stage `funct3` (the *next*
    instruction's); now registered into execute.
-4. `aludec.v` / `controller.v`: `blt/bge` now use `slt`, `bltu/bgeu` use `sltu`
-   (unsigned branches were compared as signed).
+4. `controller.v`: `bltu/bgeu` were compared as signed. Now all six branch
+   conditions come from the dedicated comparator (see "For timing").
 5. `alu.v`: shifts use only `srcb[4:0]` (`srai` encodes bit 10 of the immediate).
+
+**For timing** (ASIC flow)
+- Branches are decided by a dedicated comparator instead of the ALU's zero flag
+  (`TIMING:` comments); the ALU's unused `zero`/`sign` outputs were removed.
+- `alu.v`: `aluresult` declared once (`output reg`) – required by Verilator.
 
 Not supported by the core (unchanged): byte/half-word loads and stores, `ecall`,
 CSRs, `fence`.
