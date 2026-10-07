@@ -8,6 +8,7 @@
 #   sim/run.sh gl-cached <prog> gate-level core netlist inside the cache hierarchy
 #   sim/run.sh gl-all           both programs in both gate-level modes
 #     NETLIST=<file.nl.v> picks the netlist (default: newest OpenLane run)
+#   SRAM_TECH=scn4m_subm|sky130|ff selects the cache memories (see below)
 # <prog> is a test name from sw/ (test_core, test_mem).
 set -e
 cd "$(dirname "$0")"
@@ -16,11 +17,22 @@ BUILD=build
 mkdir -p $BUILD
 
 CORE=$(ls $ROOT/rtl/core/*.v | grep -vE '/(imem|dmem|top_module)\.v$')
-SRAMS="$ROOT/cache/sram"
-L1I="$ROOT/cache/output/l1i/l1i.v $SRAMS/l1i_tag_array/l1i_tag_array.v"
-L1D="$ROOT/cache/output/l1d/l1d.v $SRAMS/l1d_tag_array/l1d_tag_array.v"
-L1DATA="$SRAMS/sram_128x32_1r1w/sram_128x32_1r1w.v"
-L2="$ROOT/cache/output/l2/l2.v $SRAMS/l2_tag_array/l2_tag_array.v $SRAMS/l2_data_array/l2_data_array.v"   # l2_use_array is flip-flops, in rtl/mem/
+# Cache memories (SRAM_TECH):
+#   scn4m_subm (default) - OpenRAM 0.35 um macro models (cache/sram/)
+#   sky130               - OpenRAM sky130 macro models (cache/sram_sky130/)
+#   ff                   - flip-flop arrays used for the sky130 chip (rtl/mem_ff/)
+sram() { echo "$SRAMS/$1/$1.v"; }
+case "${SRAM_TECH:-scn4m_subm}" in
+  scn4m_subm) SRAMS="$ROOT/cache/sram" ;;
+  sky130)     SRAMS="$ROOT/cache/sram_sky130" ;;
+  ff)         sram() { echo "$ROOT/rtl/mem_ff/$1.v"; } ;;
+  *) echo "unknown SRAM_TECH=$SRAM_TECH"; exit 1 ;;
+esac
+# (l2_use_array is always flip-flops, in rtl/mem/)
+L1I="$ROOT/cache/output/l1i/l1i.v $(sram l1i_tag_array)"
+L1D="$ROOT/cache/output/l1d/l1d.v $(sram l1d_tag_array)"
+L1DATA="$(sram sram_128x32_1r1w)"
+L2="$ROOT/cache/output/l2/l2.v $(sram l2_tag_array) $(sram l2_data_array)"
 
 # Gate-level: synthesized core + sky130 standard-cell models (zero-delay functional)
 OL_DESIGN=/data/OpenLane/designs/riscv_core
@@ -34,7 +46,7 @@ quiet() { grep -vE ' (Reading|Writing) |Not enough words' || true; }
 build_prog() { make -s -C $ROOT/sw "$1.hex" >/dev/null; }
 
 run_l1d() {
-  iverilog -g2005 -o $BUILD/tb_l1d.vvp tb_l1d.v models/dram.v $L1D $L1DATA
+  iverilog -g2005 -o $BUILD/tb_l1d.vvp tb_l1d.v models/dram.v $ROOT/rtl/mem/ff_ram_1r1w.v $L1D $L1DATA
   (cd $BUILD && vvp -n tb_l1d.vvp) | quiet
 }
 

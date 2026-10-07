@@ -120,12 +120,14 @@ Notes:
 | `basic_config.py`, `runs/` | Single-SRAM experiment (32×256) |
 | `verify/` | Testbench + DRC script for the first 16×2 SRAM |
 | `rtl/core/` | RV32I 5-stage pipeline (imported from `riscv_pipelined_implt`, see below) |
-| `rtl/mem/` | `l2_arbiter.v`, `l2_use_array.v` (flip-flop LRU array) |
+| `rtl/mem/` | `l2_arbiter.v`, `ff_ram_1r1w.v` (flip-flop RAM), `l2_use_array.v` (LRU bits) |
+| `rtl/mem_ff/` | Flip-flop versions of the cache arrays for the sky130 chip |
 | `rtl/soc/` | `riscv_soc.v`: core + L1I + L1D + arbiter + L2 |
 | `cache/configs/` | OpenCache configurations for L1I, L1D, L2 |
 | `cache/output/` | OpenCache results: controller RTL + SRAM configs |
 | `cache/build_srams.sh` | Builds every SRAM macro with OpenRAM into `cache/sram/` |
-| `cache/sram_overrides/` | Per-macro OpenRAM options (layout fixes) |
+| `cache/sram_overrides/<tech>/` | Per-macro OpenRAM options (layout fixes) |
+| `cache/sram_sky130/` | OpenRAM sky130 builds (not used on the chip, see below) |
 | `cache/lvs_check.py` | LVS verdict from a netgen report (OpenRAM's rules) |
 | `sw/` | Self-checking RV32I test programs + linker script + Makefile |
 | `sim/` | Testbenches, DRAM model, `run.sh` |
@@ -180,10 +182,12 @@ For every cached run the testbench also checks that
 |---|---|---|---|---|
 | `l1i_tag_array` | 705 × 582 | 0 | match | |
 | `l1d_tag_array` | 758 × 582 | 0 | match | |
-| `l2_tag_array` | 972 × 582 | 0 | match | needs `words_per_row = 2` (`cache/sram_overrides/`); the default layout left one write driver's `w_en` unconnected |
+| `l2_tag_array` | 972 × 582 | 0 | match | needs `words_per_row = 2` (`cache/sram_overrides/scn4m_subm/`); the default layout left one write driver's `w_en` unconnected |
 | `sram_128x32_1r1w` | 3085 × 855 | **2** | match | known issue, see below |
 | `l2_data_array` | 5989 × 983 | **2** | match | known issue, see below |
 | `l2_use_array` | – | – | – | flip-flops (`rtl/mem/l2_use_array.v`); the 2b×32 macro was 521 × 582 µm and had DRC errors |
+
+(Table above: scn4m_subm 0.35 µm.)
 
 **Known issue – Metal3 spacing (Mosis 15.2) in the wide data arrays.** OpenRAM's
 router places a via2/via3 landing pad 0.1 µm from a horizontal Metal3 track in the
@@ -200,6 +204,36 @@ manufacturable as generated. Tried without success:
 
 A real fix needs the via moved in OpenRAM's router or a manual re-route in Magic,
 checked with DRC and LVS.
+
+---
+
+### sky130 build (for the OpenLane chip)
+
+`TECH=sky130 cache/build_srams.sh` builds the same arrays with OpenRAM's sky130
+support (PDK from `~/OpenRAM`, open_pdks e8294524). The models simulate correctly
+(`SRAM_TECH=sky130 sim/run.sh all` passes), but the layouts are not usable:
+
+| Macro | Size (µm) | DRC | LVS |
+|---|---|---|---|
+| `l1i_tag_array` | 248 × 189 | 6 | match |
+| `l1d_tag_array` | 253 × 189 | 6 | match |
+| `l2_tag_array` | 313 × 189 | 6 | **mismatch** |
+| `sram_128x32_1r1w` | 911 × 226 | 8 | **mismatch** |
+| `l2_data_array` | 1755 × 300 | 8 | **mismatch** |
+
+The DRC errors are wires of different nets routed closer than the metal spacing
+rule (filling the gap shorted the nets - checked with LVS). Other OpenRAM options
+for sky130 crash (`supply_pin_type` left/top/single), violate its row-parity rule
+(spare rows/columns), or are too small for its decoder (`words_per_row = 4`);
+`words_per_row = 2` still leaves errors.
+
+**Decision: the sky130 chip uses flip-flop arrays** (`rtl/mem_ff/`, built on
+`rtl/mem/ff_ram_1r1w.v`). They have the same ports and cycle behaviour as the
+OpenRAM models - `test_mem` gives identical cycle and miss counts - and at 32
+entries they cost about the same area as the macros (L1 data ≈ 0.2 mm² either way).
+OpenRAM remains the memory source for the 0.35 µm flow.
+
+Simulation memory selection: `SRAM_TECH=scn4m_subm` (default) | `sky130` | `ff`.
 
 ---
 

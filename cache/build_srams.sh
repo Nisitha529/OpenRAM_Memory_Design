@@ -5,16 +5,41 @@
 # 2. De-duplicate by module name (L1I and L1D share one data array macro), and
 #    skip arrays that are implemented as flip-flops in rtl/mem/ instead
 # 3. Add the technology / verification options below
-# 4. Run OpenRAM for each one in parallel, results in cache/sram/<name>/
+# 4. Run OpenRAM for each one in parallel
 #
-# Usage: cache/build_srams.sh [name ...]      (no names = build all)
+# Usage: [TECH=scn4m_subm|sky130] cache/build_srams.sh [name ...]   (no names = all)
+#   TECH=scn4m_subm (default) -> cache/sram/<name>/        (0.35 um, simulation flow)
+#   TECH=sky130               -> cache/sram_sky130/<name>/ (for OpenLane)
+# Per-macro OpenRAM options: cache/sram_overrides/<tech>/<name>.py
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SRAM_DIR="$HERE/sram"
+TECH=${TECH:-scn4m_subm}
+case "$TECH" in
+  scn4m_subm) SRAM_DIR="$HERE/sram" ;;
+  sky130)     SRAM_DIR="$HERE/sram_sky130" ;;
+  *) echo "unknown TECH=$TECH"; exit 1 ;;
+esac
 JOBS=${JOBS:-3}
 OPENRAM_HOME_DIR="$HOME/OpenRAM"
+# OpenRAM's sky130 support uses the PDK copy installed by its own Makefile
+# (open_pdks e8294524, with the sky130_fd_bd_sram cells merged in)
+export PDK_ROOT="$OPENRAM_HOME_DIR"
 
 mkdir -p "$SRAM_DIR"
+
+tech_options() {
+  echo "tech_name = \"$TECH\""
+  echo 'nominal_corner_only = True'
+  echo 'analytical_delay = True'
+  echo 'check_lvsdrc = True'
+  echo '# Call magic/netgen directly; we already run inside the Nix devShell'
+  echo 'use_nix = False'
+  if [ "$TECH" = sky130 ]; then
+    # As in OpenRAM's sky130 macro configs (macros/sram_configs/sky130_sram_common.py)
+    echo 'route_supplies = "ring"'
+    echo 'uniquify = True'
+  fi
+}
 
 for cfg in "$HERE"/output/*/*_config.py; do
   name=$(sed -n 's/^output_name = "\(.*\)"/\1/p' "$cfg")
@@ -26,14 +51,9 @@ for cfg in "$HERE"/output/*/*_config.py; do
     echo "output_path = \"$SRAM_DIR/$name\""
     echo "output_name = \"$name\""
     echo
-    echo 'tech_name = "scn4m_subm"'
-    echo 'nominal_corner_only = True'
-    echo 'analytical_delay = True'
-    echo 'check_lvsdrc = True'
-    echo '# Call magic/netgen directly; we already run inside the Nix devShell'
-    echo 'use_nix = False'
+    tech_options
     # Per-macro overrides (e.g. to work around router DRC issues)
-    [ -f "$HERE/sram_overrides/$name.py" ] && cat "$HERE/sram_overrides/$name.py"
+    [ -f "$HERE/sram_overrides/$TECH/$name.py" ] && cat "$HERE/sram_overrides/$TECH/$name.py"
   } > "$SRAM_DIR/$name.py"
 done
 

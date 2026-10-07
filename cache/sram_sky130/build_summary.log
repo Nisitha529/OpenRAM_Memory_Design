@@ -1,0 +1,4 @@
+l1i_tag_array: build=ok drc_errors=6 lvs=match
+l2_tag_array: build=ok drc_errors=6 lvs=MISMATCH
+sram_128x32_1r1w: build=ok drc_errors=8 lvs=MISMATCH
+l2_data_array: build=ok drc_errors=8 lvs=MISMATCH
