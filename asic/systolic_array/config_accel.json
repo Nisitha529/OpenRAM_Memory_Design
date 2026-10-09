@@ -1,0 +1,10 @@
+{
+  "DESIGN_NAME": "matmul_accel",
+  "VERILOG_FILES": "dir::src/*.v",
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 35,
+  "SYNTH_STRATEGY": "AREA 0",
+  "pdk::sky130A": {
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd"
+  }
+}

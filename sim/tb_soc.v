@@ -164,9 +164,11 @@ module tb_soc;
 
     // Flush L1D into L2, then L2 into DRAM, and compare DRAM with the shadow
     @(negedge clk); l1d_flush = 1; @(negedge clk); l1d_flush = 0;
+    repeat (2) @(negedge clk);   // busy is registered: let it rise first
     while (l1d_busy) @(negedge clk);
     repeat (20) @(negedge clk);
     @(negedge clk); l2_flush = 1; @(negedge clk); l2_flush = 0;
+    repeat (2) @(negedge clk);   // busy is registered: let it rise first
     while (l2_busy) @(negedge clk);
     repeat (20) @(negedge clk);
 

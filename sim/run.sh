@@ -1,6 +1,8 @@
 #!/bin/bash
 # Simulation runner.
 #   sim/run.sh l1d              unit test: random traffic into L1D + DRAM
+#   sim/run.sh systolic [N]     unit test: N x N systolic array (default 16)
+#   sim/run.sh accel [N]        unit test: matmul accelerator with an N x N array (default 8)
 #   sim/run.sh ideal  <prog>    core with perfect memories
 #   sim/run.sh cached <prog>    core + L1I + L1D + L2 + DRAM
 #   sim/run.sh all              every program in both modes + register compare
@@ -76,7 +78,19 @@ run_gl() {  # mode prog
   (cd $BUILD && vvp -n tb_gl_$mode.vvp +prog=../$ROOT/sw/$prog.hex) | quiet
 }
 
+run_systolic() {  # N
+  iverilog -g2005 -DN=$1 -o $BUILD/tb_systolic_$1.vvp tb_systolic.v $ROOT/rtl/accel/*.v
+  (cd $BUILD && vvp -n tb_systolic_$1.vvp) | grep -v "VCD info"
+}
+
+run_accel() {  # N
+  iverilog -g2005 -DN=$1 -o $BUILD/tb_matmul_accel_$1.vvp tb_matmul_accel.v $ROOT/rtl/accel/*.v
+  (cd $BUILD && vvp -n tb_matmul_accel_$1.vvp) | grep -v "VCD info"
+}
+
 case "$1" in
+  accel)    run_accel "${2:-8}" ;;
+  systolic) run_systolic "${2:-16}" ;;
   gl-ideal)  run_gl ideal  "${2:-test_core}" ;;
   gl-cached) run_gl cached "${2:-test_core}" ;;
   gl-all)    for p in test_core test_mem; do run_gl ideal $p; run_gl cached $p; done ;;

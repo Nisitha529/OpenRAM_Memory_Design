@@ -21,11 +21,12 @@ module riscv_soc (
   input          clk,
   input          rst,
 
-  // Write dirty lines back (pulse; wait for l1d_busy / l2_busy to drop)
+  // Write dirty lines back (pulse; wait for l1d_busy / l2_busy to drop).
+  // The busy flags are registered: they follow the cache stall one cycle late.
   input          l1d_flush,
   input          l2_flush,
-  output         l1d_busy,
-  output         l2_busy,
+  output reg     l1d_busy,
+  output reg     l2_busy,
 
   // Off-chip memory (one 256-bit L2 line per address)
   output         mem_csb,
@@ -36,6 +37,16 @@ module riscv_soc (
   input          mem_stall
 );
 
+  // ---------------- reset synchronizer ----------------
+  // rst may arrive at any time; inside, it is asserted at once but released
+  // only on a clock edge, two flops later. Every block uses rst_sync, so the
+  // release is an ordinary timed path instead of an unconstrained input.
+  reg [1:0] rst_sr;
+  always @(posedge clk or posedge rst)
+    if (rst) rst_sr <= 2'b11;
+    else     rst_sr <= {rst_sr[0], 1'b0};
+  wire rst_sync = rst_sr[1];
+
   // ---------------- core ----------------
   wire [31:0] pcf, instrf, readdatam, imem_addr;
   wire [31:0] dreq_addr, dreq_wdata;
@@ -45,7 +56,7 @@ module riscv_soc (
 
   riscv_module core (
     .clk         (clk),
-    .reset       (rst),
+    .reset       (rst_sync),
     .pcf         (pcf),
     .instrf      (instrf),
     .memwritem   (memwritem),
@@ -62,7 +73,7 @@ module riscv_soc (
   );
 
   // ---------------- L1 instruction cache ----------------
-  wire        i_csb = rst;          // always fetching
+  wire        i_csb = rst_sync;          // always fetching
   wire        i_stall;
   wire        i_main_csb, i_main_stall;
   wire [13:0] i_main_addr;
@@ -70,7 +81,7 @@ module riscv_soc (
 
   l1i u_l1i (
     .clk        (clk),
-    .rst        (rst),
+    .rst        (rst_sync),
     .csb        (i_csb),
     .addr       (imem_addr[17:2]),
     .dout       (instrf),
@@ -90,7 +101,7 @@ module riscv_soc (
 
   l1d u_l1d (
     .clk        (clk),
-    .rst        (rst),
+    .rst        (rst_sync),
     .flush      (l1d_flush),
     .csb        (d_csb),
     .web        (~dreq_we),
@@ -111,7 +122,7 @@ module riscv_soc (
   // stalling. Its answer is valid in the first following cycle with stall = 0.
   reg i_pend, d_pend;
   always @(posedge clk) begin
-    if (rst) begin
+    if (rst_sync) begin
       i_pend <= 1'b0;
       d_pend <= 1'b0;
     end else begin
@@ -134,7 +145,7 @@ module riscv_soc (
 
   l2_arbiter #(.ADDR_WIDTH(14), .LINE_WIDTH(128)) u_arb (
     .clk      (clk),
-    .rst      (rst),
+    .rst      (rst_sync),
     .i_csb    (i_main_csb),
     .i_addr   (i_main_addr),
     .i_dout   (i_main_dout),
@@ -155,7 +166,7 @@ module riscv_soc (
 
   l2 u_l2 (
     .clk        (clk),
-    .rst        (rst),
+    .rst        (rst_sync),
     .flush      (l2_flush),
     .csb        (l2_csb),
     .web        (l2_web),
@@ -171,7 +182,16 @@ module riscv_soc (
     .main_stall (mem_stall)
   );
 
-  assign l1d_busy = d_stall;
-  assign l2_busy  = l2_stall;
+  // Status outputs come straight from flip-flops: driving the stall logic
+  // directly out of the chip failed timing at the slow corner.
+  always @(posedge clk) begin
+    if (rst_sync) begin
+      l1d_busy <= 1'b0;
+      l2_busy  <= 1'b0;
+    end else begin
+      l1d_busy <= d_stall;
+      l2_busy  <= l2_stall;
+    end
+  end
 
 endmodule

@@ -123,6 +123,7 @@ Notes:
 | `rtl/mem/` | `l2_arbiter.v`, `ff_ram_1r1w.v` (flip-flop RAM), `l2_use_array.v` (LRU bits) |
 | `rtl/mem_ff/` | Flip-flop versions of the cache arrays for the sky130 chip |
 | `rtl/soc/` | `riscv_soc.v`: core + L1I + L1D + arbiter + L2 |
+| `rtl/accel/` | Systolic-array matrix-multiply accelerator: PE, array, `matmul_accel` |
 | `cache/configs/` | OpenCache configurations for L1I, L1D, L2 |
 | `cache/output/` | OpenCache results: controller RTL + SRAM configs |
 | `cache/build_srams.sh` | Builds every SRAM macro with OpenRAM into `cache/sram/` |
@@ -132,6 +133,7 @@ Notes:
 | `sw/` | Self-checking RV32I test programs + linker script + Makefile |
 | `sim/` | Testbenches, DRAM model, `run.sh` |
 | `asic/riscv_core/` | OpenLane config, RTL sync script, release LEF / netlist / metrics |
+| `asic/riscv_soc/`, `asic/systolic_array/` | OpenLane configs and RTL sync scripts |
 
 ---
 
@@ -280,6 +282,69 @@ A dedicated comparator (`eqe`/`lte`/`ltue` in `datapath.v`) removed it.
 **Gate-level verification** – the post-layout netlist with sky130 cell models
 (`sim/run.sh gl-all`) passes `test_core` and `test_mem`, with perfect memories and
 inside the L1I/L1D/L2 hierarchy. Timing is covered by sign-off STA.
+
+---
+
+## Matrix-Multiply Accelerator (in progress)
+
+Goal: attach a systolic-array accelerator to the SoC for C = A × B. It is based on
+the EN4020 Group 4 `Systolic_Array_Design` (Zynq, 8×8, 32-bit), re-implemented for
+the ASIC flow.
+
+**Step 1 – array (done)**: `rtl/accel/systolic_pe.v`, `rtl/accel/systolic_array.v`
+
+| | Original (Zynq) | This project |
+|---|---|---|
+| Size | fixed 8×8, 64 hand-written instances | parameter `N` (generate loops), default 16×16 |
+| Operands | 32-bit unsigned | 16-bit signed |
+| Accumulator | 64-bit | 40-bit signed (parameter): no overflow for K ≤ 512 even at −32768² |
+| Reset | `rst_n` / `rst_flush`, initial values on regs | `rst_n` + synchronous `clear`, no initial values (ASIC-safe) |
+| Result read-out | sequential BRAM write, 64-bit port | `rd_row`/`rd_col` select, `rd_data` next cycle |
+
+Output-stationary dataflow: A moves east, B moves south, PE(i,j) accumulates
+C[i][j]. Inputs must be skewed (row i / column j delayed by i / j steps); an
+(N×K)·(K×N) product takes K + 2N − 2 steps.
+
+`sim/run.sh systolic [N]` – self-checking test (testbench acts as feeder): random,
+worst-case (−32768), rectangular K = 37, random `en` stalls, `clear` between
+products. Passes for N = 16 and N = 4. Mutation-checked: zero-extending the product
+or ignoring `en` makes it fail. Verilator `-Wall` lint is clean.
+
+Synthesis (sky130, `asic/systolic_array/`): the full 16×16 array is 504 k cells,
+5.07 mm² – too large for this flow (and ≈ a whole Caravel user area). At 45 nm the
+area would be ≈ 1 mm², but the cell count (tool run time / memory) stays the same.
+The chip therefore uses an **8×8 array with tiling**; 16×16 stays a parameter.
+
+**Step 2 – accelerator block (done)**: `rtl/accel/matmul_accel.v`
+
+- C = A·B for A (M×K), B (K×P), 1 ≤ M, K, P ≤ 16, on an N×N array (N = 8)
+  using ⌈M/N⌉·⌈P/N⌉ output tiles sequenced in hardware.
+- A, B, C buffers are flip-flop arrays; each array row/column reads its own slice,
+  so all 2N operands are fed every cycle, and the diagonal skew comes from
+  indexing A[row][t − r] / B[t − c][col] (no address arithmetic loop).
+- Register bus (request at a rising edge, data next cycle):
+
+| Address | Register |
+|---|---|
+| `0x0000` | CTRL – write bit 0 = start |
+| `0x0004` | STATUS – bit 0 busy, bit 1 done |
+| `0x0008` | DIMS – [4:0] M, [12:8] K, [20:16] P |
+| `0x0400` | A[i][k] at `+4·(16i + k)` (write-only, 16-bit) |
+| `0x0800` | B[k][j] at `+4·(16k + j)` (write-only, 16-bit) |
+| `0x1000` | C[i][j] at `+8·(16i + j)`: low 32 bits, `+4`: upper bits sign-extended |
+
+- Cycles per tile: 1 + (K + 2N − 2) + (N² + 1). 16×16·16×16: **385 cycles**
+  (4 tiles); 8×8·8×8: 89 cycles. The original Zynq feeder needed ≈ 1000 cycles
+  for 8×8·8×8 (one operand per 3 cycles). Copying results (N² per tile) is now
+  the largest part and can be overlapped later.
+- `sim/run.sh accel [N]` drives the block only through its bus: 7 products
+  (random, worst-case, partial tiles, short K, 1×1, …) pass for N = 8, 4 and 16;
+  a tiling mutation is caught. Verilator `-Wall` is clean.
+- Synthesis (N = 8): 179 k cells, **2.03 mm²** (64 PEs ≈ 1.27 mm², buffers
+  ≈ 0.75 mm², mostly the 40-bit C buffer).
+
+Next steps: (3) memory-mapped connection to the SoC + `sw/test_matmul.S`,
+(4) OpenLane.
 
 ---
 
