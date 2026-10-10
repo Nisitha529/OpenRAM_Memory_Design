@@ -5,11 +5,13 @@
 #   sim/run.sh accel [N]        unit test: matmul accelerator with an N x N array (default 8)
 #   sim/run.sh ideal  <prog>    core with perfect memories
 #   sim/run.sh cached <prog>    core + L1I + L1D + L2 + DRAM
-#   sim/run.sh all              every program in both modes + register compare
+#   sim/run.sh all              every program in both modes + register compare,
+#                               then test_matmul (accelerator) on the cached SoC
 #   sim/run.sh gl-ideal  <prog> gate-level core netlist (from OpenLane), perfect memories
 #   sim/run.sh gl-cached <prog> gate-level core netlist inside the cache hierarchy
 #   sim/run.sh gl-all           both programs in both gate-level modes
 #     NETLIST=<file.nl.v> picks the netlist (default: newest OpenLane run)
+#   MAX_CYCLES=<n> simulation timeout (default 500000)
 #   SRAM_TECH=scn4m_subm|sky130|ff selects the cache memories (see below)
 # <prog> is a test name from sw/ (test_core, test_mem).
 set -e
@@ -58,9 +60,9 @@ run_prog() {  # mode prog
   if [ $mode = ideal ]; then
     iverilog -g2005 -DIDEAL -o $BUILD/tb_ideal.vvp tb_soc.v $CORE
   else
-    iverilog -g2005 -o $BUILD/tb_cached.vvp tb_soc.v models/dram.v $ROOT/rtl/soc/*.v $ROOT/rtl/mem/*.v $CORE $L1I $L1D $L1DATA $L2
+    iverilog -g2005 -o $BUILD/tb_cached.vvp tb_soc.v models/dram.v $ROOT/rtl/soc/*.v $ROOT/rtl/mem/*.v $ROOT/rtl/accel/*.v $CORE $L1I $L1D $L1DATA $L2
   fi
-  (cd $BUILD && vvp -n tb_$mode.vvp +prog=../$ROOT/sw/$prog.hex +regs=${prog}_$mode.regs) | quiet
+  (cd $BUILD && vvp -n tb_$mode.vvp +prog=../$ROOT/sw/$prog.hex +regs=${prog}_$mode.regs +max_cycles=${MAX_CYCLES:-500000}) | quiet
 }
 
 run_gl() {  # mode prog
@@ -73,7 +75,7 @@ run_gl() {  # mode prog
   if [ $mode = ideal ]; then
     iverilog -g2005 $GL_DEFS -DIDEAL -o $BUILD/tb_gl_ideal.vvp tb_soc.v $nl $cells
   else
-    iverilog -g2005 $GL_DEFS -o $BUILD/tb_gl_cached.vvp tb_soc.v models/dram.v $ROOT/rtl/soc/*.v $ROOT/rtl/mem/*.v $nl $cells $L1I $L1D $L1DATA $L2
+    iverilog -g2005 $GL_DEFS -o $BUILD/tb_gl_cached.vvp tb_soc.v models/dram.v $ROOT/rtl/soc/*.v $ROOT/rtl/mem/*.v $ROOT/rtl/accel/*.v $nl $cells $L1I $L1D $L1DATA $L2
   fi
   (cd $BUILD && vvp -n tb_gl_$mode.vvp +prog=../$ROOT/sw/$prog.hex) | quiet
 }
@@ -84,7 +86,7 @@ run_systolic() {  # N
 }
 
 run_accel() {  # N
-  iverilog -g2005 -DN=$1 -o $BUILD/tb_matmul_accel_$1.vvp tb_matmul_accel.v $ROOT/rtl/accel/*.v
+  iverilog -g2005 -DN=$1 -o $BUILD/tb_matmul_accel_$1.vvp tb_matmul_accel.v models/dram.v $ROOT/rtl/accel/*.v
   (cd $BUILD && vvp -n tb_matmul_accel_$1.vvp) | grep -v "VCD info"
 }
 
@@ -107,6 +109,8 @@ case "$1" in
       else
         echo "REGS    : $p final registers DIFFER:"; diff $BUILD/${p}_ideal.regs $BUILD/${p}_cached.regs
       fi
-    done ;;
+    done
+    # accelerator (DMA) vs software: cached SoC only, about 850k cycles
+    MAX_CYCLES=3000000 run_prog cached test_matmul ;;
   *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

@@ -2,7 +2,7 @@
 PREFIX ?= riscv64-unknown-elf-
 AS_FLAGS = -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles -T link.ld
 
-TESTS = test_core test_mem
+TESTS = test_core test_mem test_matmul
 
 all: $(TESTS:%=%.hex)
 

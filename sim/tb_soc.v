@@ -11,6 +11,8 @@
 //   +regs=<file>       where to dump the final register file
 //   +max_cycles=<n>    timeout
 //
+// Programs may store up to 8 performance counters at 0x3ff10.. (printed as Perf[n]).
+//
 // The program stores its result to "tohost" (1 = pass). In cached mode the
 // testbench then flushes L1D and L2 and checks that DRAM holds exactly what
 // the program stored.
@@ -19,6 +21,7 @@ module tb_soc;
 
   localparam MEM_WORDS = 1 << 16;          // 256 KB
   localparam TOHOST    = 32'h0003ff00;
+  localparam PERF      = 32'h0003ff10;       // programs may store counters here
   localparam LINE_WORDS = 8;               // 256-bit DRAM line
 
 `ifndef CLK_HALF
@@ -84,14 +87,22 @@ module tb_soc;
   `define CORE soc.core
 
   // ---- statistics: every request an L1 sends to L2 is an L1 miss, etc. ----
-  integer l1i_miss = 0, l1d_miss = 0, l1d_wb = 0, l2_miss = 0, l2_wb = 0;
+  integer l1i_miss = 0, l1d_miss = 0, l1d_wb = 0, l2_miss = 0, l2_wb = 0, dma_rd = 0, dma_wr = 0;
   always @(posedge clk) if (!rst) begin
     if (soc.u_arb.i_go)             l1i_miss = l1i_miss + 1;
+    if (soc.u_arb.x_go &&  soc.u_arb.x_web) dma_rd = dma_rd + 1;
+    if (soc.u_arb.x_go && !soc.u_arb.x_web) dma_wr = dma_wr + 1;
     if (soc.u_arb.d_go &&  soc.u_arb.d_web) l1d_miss = l1d_miss + 1;
     if (soc.u_arb.d_go && !soc.u_arb.d_web) l1d_wb   = l1d_wb + 1;
     if (!mem_csb && !mem_stall &&  mem_web) l2_miss  = l2_miss + 1;
     if (!mem_csb && !mem_stall && !mem_web) l2_wb    = l2_wb + 1;
   end
+
+  // The accelerator's DMA writes memory too: keep the shadow up to date
+  integer dw;
+  always @(posedge clk) if (!rst && soc.u_arb.x_go && !soc.u_arb.x_web)
+    for (dw = 0; dw < 4; dw = dw + 1)
+      shadow[{soc.u_arb.x_addr, dw[1:0]}] <= soc.u_arb.x_din[dw*32 +: 32];
 `endif
 
   // ---- statistics common to both modes ----
@@ -109,7 +120,8 @@ module tb_soc;
   reg        done = 0;
   reg [31:0] result;
   always @(posedge clk) if (!rst && memwritem && !freeze && !done) begin
-    shadow[aluresultm[17:2]] <= writedatam;
+    if (aluresultm[31:28] != 4'h4)          // not a memory-mapped device
+      shadow[aluresultm[17:2]] <= writedatam;
     if (aluresultm == TOHOST) begin
       done   <= 1;
       result <= writedatam;
@@ -156,11 +168,16 @@ module tb_soc;
       errors = errors + 1;
     end
     $display("Cycles  : %0d  (frozen by caches: %0d)", cycles, frozen);
+    for (i = 0; i < 8; i = i + 1)
+      if (shadow[PERF/4 + i] !== 32'd0)
+        $display("Perf[%0d] : %0d", i, shadow[PERF/4 + i]);
     $display("Loads   : %0d   Stores: %0d", loads, stores);
 
 `ifndef IDEAL
     $display("L1I misses: %0d | L1D misses: %0d, write-backs: %0d | L2 misses: %0d, write-backs: %0d",
              l1i_miss, l1d_miss, l1d_wb, l2_miss, l2_wb);
+    if (dma_rd || dma_wr)
+      $display("DMA     : %0d line reads, %0d line writes", dma_rd, dma_wr);
 
     // Flush L1D into L2, then L2 into DRAM, and compare DRAM with the shadow
     @(negedge clk); l1d_flush = 1; @(negedge clk); l1d_flush = 0;

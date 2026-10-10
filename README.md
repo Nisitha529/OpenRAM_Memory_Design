@@ -343,8 +343,53 @@ The chip therefore uses an **8×8 array with tiling**; 16×16 stays a parameter.
 - Synthesis (N = 8): 179 k cells, **2.03 mm²** (64 PEs ≈ 1.27 mm², buffers
   ≈ 0.75 mm², mostly the 40-bit C buffer).
 
-Next steps: (3) memory-mapped connection to the SoC + `sw/test_matmul.S`,
-(4) OpenLane.
+**Step 3 – DMA + SoC integration (done)**
+
+```
+ CPU writes A, B (cached)  ->  SYSCTRL flush  ->  CTRL = 3  ->  poll STATUS.done
+     ->  SYSCTRL invalidate  ->  CPU reads C (cached)
+ Accelerator: DMA reads A, B lines from the L2 -> 8x8 tiles -> DMA writes C lines
+```
+
+- `matmul_accel` has a DMA port (OpenCache main protocol, 128-bit lines) and
+  BASE_A / BASE_B / BASE_C registers (`0x000C` / `0x0010` / `0x0014`).
+  `CTRL = 3` runs load → compute → store; `CTRL = 1` still computes from the
+  buffers written over the bus.
+- Memory layout: A `int32[M][K]`, B `int32[K][P]` (16-bit values), C
+  `int64[M][P]` (low word first), row-major, 16-byte-aligned bases. C is written
+  in whole 16-byte lines: reserve its size rounded up to 16 bytes.
+- `l2_arbiter` has a third requester (priority L1D > L1I > DMA).
+- `riscv_soc` address map:
+
+| Address | Device |
+|---|---|
+| `0x0000_0000`–`0x0003_FFFF` | memory through the caches |
+| `0x4000_0000`–`0x4000_1FFF` | `matmul_accel` (not cached) |
+| `0x4001_0000` | SYSCTRL: write bit 0 flush L1D, bit 1 invalidate L1D; read bit 0 busy |
+| `0x4001_0004` | CYCLES: free-running cycle counter |
+
+- **Coherence**: the DMA works at the L2, below the write-back L1D. Before a job
+  software flushes the L1D (A and B may still be dirty there); after it,
+  software invalidates the L1D (it may hold stale copies of C). OpenCache has
+  no invalidate, so SYSCTRL resets the L1D (clears every tag). SYSCTRL first
+  blocks new L1D requests and waits for the cache to be idle; the core simply
+  freezes if it needs data memory meanwhile.
+
+`sw/test_matmul.S` (cached SoC) – random A, B; software product (shift-add
+multiply, the core has no `mul`) vs. accelerator DMA job; C pre-filled with a
+marker through the L1D and compared backwards so stale lines would be caught:
+
+| Product | Software | Accelerator (flush + DMA + compute + invalidate) | Speed-up |
+|---|---|---|---|
+| 16×16 · 16×16 | 693 809 cycles | 2 768 cycles | ≈ 250× |
+| 5×13 · 13×11 | 121 052 cycles | 936 cycles | ≈ 130× |
+
+Removing the flush makes the program fail (DMA reads stale A/B); removing the
+invalidate makes it fail (CPU reads stale C markers). `sim/run.sh all` includes
+this test; the accelerator unit test (`sim/run.sh accel [N]`) adds 6 DMA jobs
+against a memory model (N = 8, 4, 16 pass).
+
+Next: OpenLane for the accelerator (≈ 2 mm² of cells) and the SoC with it.
 
 ---
 
