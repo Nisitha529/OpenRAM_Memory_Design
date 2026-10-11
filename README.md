@@ -389,7 +389,38 @@ invalidate makes it fail (CPU reads stale C markers). `sim/run.sh all` includes
 this test; the accelerator unit test (`sim/run.sh accel [N]`) adds 6 DMA jobs
 against a memory model (N = 8, 4, 16 pass).
 
-Next: OpenLane for the accelerator (≈ 2 mm² of cells) and the SoC with it.
+**Step 4 – OpenLane for the accelerator (done)**: `/data/OpenLane/designs/systolic_array`,
+configs in `asic/systolic_array/`, release LEF / metrics / gzipped netlist in
+`asic/systolic_array/release/`.
+
+35 ns clock (as the SoC), 20 % I/O budget, optimised at the slow corner
+(`DEFAULT_CORNER = max_ss`), post-GRT timing repair, diodes on nets > 300 µm.
+
+| Run | Change | Setup WNS (ss) | Hold | Notes |
+|---|---|---|---|---|
+| accel_run1 | – | −0.64 ns (4) | clean | path: feed step `t` → buffer read mux → multiplier → 40-bit add |
+| accel_run2_pipe | RTL: operand pipeline register before the array | +9.45 ns | −0.004 ns (1, ff) | PE→PE shift path (no logic) |
+| **accel_run3_hold** | hold margins 0.2 / 0.15 ns, post-GRT design repair | **+9.39 ns** | **+0.088 ns** | **release** |
+
+The pipeline register (`west_q` / `north_q` / `feed_q` in `matmul_accel.v`)
+splits buffer read and multiply-accumulate into two cycles without changing the
+cycle count (results are complete before the copy-out reads them;
+`test_matmul` gives identical numbers).
+
+Release (accel_run3_hold):
+
+| | |
+|---|---|
+| Die | 2.44 × 2.45 mm |
+| Cells | 347 k (incl. fill / tap / diodes) |
+| Setup / hold | met at all 9 corners (setup +9.39 ns at ss → ≈ 39 MHz worst case; +20.7 ns at tt) |
+| DRC (route / Magic / KLayout), LVS, XOR | 0 / 0 / 0, 0, 0 |
+| Power | ≈ 83 mW |
+| Open items | 207 antenna nets; max-slew pins mostly at the slow corners (7455 ss, 118 tt); max-cap 810; fanout > 10 (guideline) |
+
+**Gate-level check**: `sim/run.sh gl-accel` runs the accelerator unit test on the
+post-layout netlist (sky130 cell models): all 13 products, including the 6 DMA
+jobs, pass with the same cycle counts as the RTL (≈ 5 minutes).
 
 ---
 

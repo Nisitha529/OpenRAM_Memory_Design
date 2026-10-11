@@ -7,6 +7,7 @@
 // Results are compared with a 64-bit reference product.
 //
 //   +define+N=<n>   physical array size (default 8)
+//   +define+NODUMP  no waveform (gate-level netlists)
 `timescale 1ns/1ps
 module tb_matmul_accel;
 
@@ -180,8 +181,10 @@ module tb_matmul_accel;
   endtask
 
   initial begin
+`ifndef NODUMP
     $dumpfile("tb_matmul_accel.vcd");
     $dumpvars(0, tb_matmul_accel);
+`endif
     repeat (2) @(negedge clk);
     rst_n = 1;
 

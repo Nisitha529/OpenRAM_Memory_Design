@@ -162,6 +162,27 @@ module matmul_accel #(
     end
   endgenerate
 
+  // ---------------- operand pipeline register ----------------
+  // The buffer read (index arithmetic and wide read muxes) and the PE
+  // multiply-accumulate together were too long for one cycle at the slow
+  // corner. The operands of feed step t are registered here and enter the
+  // array one cycle later, together with their enable. Results are still
+  // complete before the copy-out reads them, so the cycle count is unchanged.
+  reg [N*DATA_WIDTH-1:0] west_q, north_q;
+  reg                    feed_q;
+
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      west_q  <= {N*DATA_WIDTH{1'b0}};
+      north_q <= {N*DATA_WIDTH{1'b0}};
+      feed_q  <= 1'b0;
+    end else begin
+      west_q  <= west_in;
+      north_q <= north_in;
+      feed_q  <= (state == S_FEED);
+    end
+  end
+
   // ---------------- the array ----------------
   wire [ACC_WIDTH-1:0] rd_data;
 
@@ -169,9 +190,9 @@ module matmul_accel #(
     .clk      (clk),
     .rst_n    (rst_n),
     .clear    (state == S_CLEAR),
-    .en       (state == S_FEED),
-    .west_in  (west_in),
-    .north_in (north_in),
+    .en       (feed_q),
+    .west_in  (west_q),
+    .north_in (north_q),
     .rd_row   (dr[2*LOGN-1:LOGN]),
     .rd_col   (dr[LOGN-1:0]),
     .rd_data  (rd_data)

@@ -10,6 +10,7 @@
 #   sim/run.sh gl-ideal  <prog> gate-level core netlist (from OpenLane), perfect memories
 #   sim/run.sh gl-cached <prog> gate-level core netlist inside the cache hierarchy
 #   sim/run.sh gl-all           both programs in both gate-level modes
+#   sim/run.sh gl-accel         accelerator unit test on its OpenLane netlist (ACCEL_NETLIST=...)
 #     NETLIST=<file.nl.v> picks the netlist (default: newest OpenLane run)
 #   MAX_CYCLES=<n> simulation timeout (default 500000)
 #   SRAM_TECH=scn4m_subm|sky130|ff selects the cache memories (see below)
@@ -90,8 +91,18 @@ run_accel() {  # N
   (cd $BUILD && vvp -n tb_matmul_accel_$1.vvp) | grep -v "VCD info"
 }
 
+run_gl_accel() {
+  nl=${ACCEL_NETLIST:-$(ls -t /data/OpenLane/designs/systolic_array/runs/*/final/nl/matmul_accel.nl.v 2>/dev/null | head -1)}
+  [ -f "$nl" ] || { echo "no accelerator netlist found (run OpenLane first)"; exit 1; }
+  echo "Netlist : $nl"
+  iverilog -g2005 -DFUNCTIONAL -DUNIT_DELAY=#0 -DNODUMP -DN=8 -o $BUILD/tb_gl_accel.vvp tb_matmul_accel.v models/dram.v $nl \
+    $SC_VERILOG/primitives.v $SC_VERILOG/sky130_fd_sc_hd.v
+  (cd $BUILD && vvp -n tb_gl_accel.vvp) | grep -v "VCD info"
+}
+
 case "$1" in
   accel)    run_accel "${2:-8}" ;;
+  gl-accel) run_gl_accel ;;
   systolic) run_systolic "${2:-16}" ;;
   gl-ideal)  run_gl ideal  "${2:-test_core}" ;;
   gl-cached) run_gl cached "${2:-test_core}" ;;
