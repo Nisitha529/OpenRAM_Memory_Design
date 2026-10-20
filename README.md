@@ -400,27 +400,39 @@ configs in `asic/systolic_array/`, release LEF / metrics / gzipped netlist in
 |---|---|---|---|---|
 | accel_run1 | – | −0.64 ns (4) | clean | path: feed step `t` → buffer read mux → multiplier → 40-bit add |
 | accel_run2_pipe | RTL: operand pipeline register before the array | +9.45 ns | −0.004 ns (1, ff) | PE→PE shift path (no logic) |
-| **accel_run3_hold** | hold margins 0.2 / 0.15 ns, post-GRT design repair | **+9.39 ns** | **+0.088 ns** | **release** |
+| accel_run3_hold | hold margins 0.2 / 0.15 ns, post-GRT design repair | +9.39 ns | +0.088 ns | timing signed off |
+| accel_run4_wirelen | max wire length 400 µm (signal + clock) | +7.89 ns | +0.002 ns | slew 7455 → 1584, cap 810 → 40, antenna 207 → 348 |
+| **accel_run5_antenna** | antenna margin 50 %, 15 iterations, diodes > 200 µm, GRT hold margin 0.2 ns | **+7.99 ns** | **+0.103 ns** | **release**: antenna 100 |
 
 The pipeline register (`west_q` / `north_q` / `feed_q` in `matmul_accel.v`)
 splits buffer read and multiply-accumulate into two cycles without changing the
 cycle count (results are complete before the copy-out reads them;
 `test_matmul` gives identical numbers).
 
-Release (accel_run3_hold):
+Release (accel_run5_antenna):
 
 | | |
 |---|---|
 | Die | 2.44 × 2.45 mm |
-| Cells | 347 k (incl. fill / tap / diodes) |
-| Setup / hold | met at all 9 corners (setup +9.39 ns at ss → ≈ 39 MHz worst case; +20.7 ns at tt) |
+| Cells | 400 k (incl. fill / tap / 81 k antenna diodes) |
+| Setup / hold | met at all 9 corners (setup +7.99 ns at ss, hold +0.103 ns) |
 | DRC (route / Magic / KLayout), LVS, XOR | 0 / 0 / 0, 0, 0 |
-| Power | ≈ 83 mW |
-| Open items | 207 antenna nets; max-slew pins mostly at the slow corners (7455 ss, 118 tt); max-cap 810; fanout > 10 (guideline) |
+| Power | ≈ 85 mW |
+| Antenna | 100 nets, all < 3× (71 < 1.5×), mostly met1 |
+| Max slew | 2429 pins at ss (1382 of them < 0.1 ns over 0.75 ns), 85 at tt |
+| Max cap / fanout | 65 / fanout > 10 (guideline; diodes count as loads) |
+
+Clean-up notes: the 400 µm wire-length limit is what fixed slew and capacitance
+(the worst slew was the clock input wire, 2.66 ns → buffered). The remaining
+antenna / slew items trade against each other in this flow: OpenLane 2.3.10
+repairs slew *before* antenna diodes are inserted, so the diodes added to fix
+antennas load nets that were already repaired. Closing both needs a slew repair
+after diode insertion (a custom flow step) or manual ECO.
 
 **Gate-level check**: `sim/run.sh gl-accel` runs the accelerator unit test on the
 post-layout netlist (sky130 cell models): all 13 products, including the 6 DMA
-jobs, pass with the same cycle counts as the RTL (≈ 5 minutes).
+jobs, pass with the same cycle counts as the RTL (≈ 5 minutes) – checked for
+both accel_run3_hold and accel_run5_antenna.
 
 ---
 
