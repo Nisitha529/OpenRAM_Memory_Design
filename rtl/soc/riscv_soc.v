@@ -245,7 +245,10 @@ module riscv_soc (
   wire [127:0] x_din, x_dout;
   wire         acc_busy, acc_done;
 
-  matmul_accel #(.N(8), .MAX_DIM(16), .DATA_WIDTH(16), .ACC_WIDTH(40), .LINE_ADDR_W(14)) u_accel (
+  // Default parameters (8x8 array, matrices up to 16x16, 16-bit data, 40-bit
+  // accumulators, 14-bit line addresses). No overrides here: in the
+  // hierarchical chip build u_accel is the hardened matmul_accel macro.
+  matmul_accel u_accel (
     .clk     (clk),
     .rst_n   (~rst_sync),
     .sel     (acc_sel),
