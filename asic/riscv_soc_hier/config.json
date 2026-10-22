@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "version": 2,
+    "flow": "Classic",
+    "substituting_steps": {
+      "+OpenROAD.RepairAntennas": "OpenROAD.RepairDesignPostGRT"
+    }
+  },
+  "DESIGN_NAME": "riscv_soc",
+  "VERILOG_FILES": "dir::src/*.v",
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 35,
+  "IO_DELAY_CONSTRAINT": 20,
+  "FP_SIZING": "absolute",
+  "DIE_AREA": [
+    0,
+    0,
+    4886,
+    2846
+  ],
+  "PL_TARGET_DENSITY_PCT": 45,
+  "MACROS": {
+    "matmul_accel": {
+      "gds": [
+        "dir::macros/matmul_accel/gds/matmul_accel.gds"
+      ],
+      "lef": [
+        "dir::macros/matmul_accel/lef/matmul_accel.lef"
+      ],
+      "vh": [
+        "dir::macros/matmul_accel/vh/matmul_accel.vh"
+      ],
+      "nl": [
+        "dir::macros/matmul_accel/nl/matmul_accel.nl.v"
+      ],
+      "lib": {
+        "max_ff_n40C_1v95": [
+          "dir::macros/matmul_accel/lib/max_ff_n40C_1v95/matmul_accel__max_ff_n40C_1v95.lib"
+        ],
+        "max_ss_100C_1v60": [
+          "dir::macros/matmul_accel/lib/max_ss_100C_1v60/matmul_accel__max_ss_100C_1v60.lib"
+        ],
+        "max_tt_025C_1v80": [
+          "dir::macros/matmul_accel/lib/max_tt_025C_1v80/matmul_accel__max_tt_025C_1v80.lib"
+        ],
+        "min_ff_n40C_1v95": [
+          "dir::macros/matmul_accel/lib/min_ff_n40C_1v95/matmul_accel__min_ff_n40C_1v95.lib"
+        ],
+        "min_ss_100C_1v60": [
+          "dir::macros/matmul_accel/lib/min_ss_100C_1v60/matmul_accel__min_ss_100C_1v60.lib"
+        ],
+        "min_tt_025C_1v80": [
+          "dir::macros/matmul_accel/lib/min_tt_025C_1v80/matmul_accel__min_tt_025C_1v80.lib"
+        ],
+        "nom_ff_n40C_1v95": [
+          "dir::macros/matmul_accel/lib/nom_ff_n40C_1v95/matmul_accel__nom_ff_n40C_1v95.lib"
+        ],
+        "nom_ss_100C_1v60": [
+          "dir::macros/matmul_accel/lib/nom_ss_100C_1v60/matmul_accel__nom_ss_100C_1v60.lib"
+        ],
+        "nom_tt_025C_1v80": [
+          "dir::macros/matmul_accel/lib/nom_tt_025C_1v80/matmul_accel__nom_tt_025C_1v80.lib"
+        ]
+      },
+      "spef": {
+        "nom_*": [
+          "dir::macros/matmul_accel/spef/nom/matmul_accel.nom.spef"
+        ],
+        "min_*": [
+          "dir::macros/matmul_accel/spef/min/matmul_accel.min.spef"
+        ],
+        "max_*": [
+          "dir::macros/matmul_accel/spef/max/matmul_accel.max.spef"
+        ]
+      },
+      "instances": {
+        "u_accel": {
+          "location": [
+            100,
+            100
+          ],
+          "orientation": "N"
+        }
+      }
+    }
+  },
+  "PDN_MACRO_CONNECTIONS": [
+    "u_accel VPWR VGND VPWR VGND"
+  ],
+  "PL_MACRO_HALO": "20 20",
+  "SYNTH_STRATEGY": "AREA 0",
+  "DEFAULT_CORNER": "max_ss_100C_1v60",
+  "RUN_POST_GRT_RESIZER_TIMING": true,
+  "RUN_POST_GRT_DESIGN_REPAIR": true,
+  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.2,
+  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.2,
+  "RUN_HEURISTIC_DIODE_INSERTION": true,
+  "HEURISTIC_ANTENNA_THRESHOLD": 200,
+  "GRT_ANTENNA_ITERS": 15,
+  "GRT_ANTENNA_MARGIN": 50,
+  "CTS_SINK_CLUSTERING_SIZE": 10,
+  "DESIGN_REPAIR_MAX_SLEW_PCT": 30,
+  "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 30,
+  "DESIGN_REPAIR_MAX_WIRE_LENGTH": 400,
+  "GRT_DESIGN_REPAIR_MAX_WIRE_LENGTH": 400,
+  "CTS_CLK_MAX_WIRE_LENGTH": 400,
+  "pdk::sky130A": {
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd"
+  }
+}
