@@ -3,7 +3,8 @@
     "version": 2,
     "flow": "Classic",
     "substituting_steps": {
-      "+OpenROAD.RepairAntennas": "OpenROAD.RepairDesignPostGRT"
+      "Magic.WriteLEF": null,
+      "Odb.CheckDesignAntennaProperties": null
     }
   },
   "DESIGN_NAME": "riscv_soc",
@@ -11,13 +12,16 @@
   "CLOCK_PORT": "clk",
   "CLOCK_PERIOD": 35,
   "IO_DELAY_CONSTRAINT": 20,
+  "PNR_SDC_FILE": "dir::pnr.sdc",
+  "SIGNOFF_SDC_FILE": "dir::signoff.sdc",
   "FP_SIZING": "absolute",
   "DIE_AREA": [
     0,
     0,
-    4886,
-    2846
+    2836,
+    4215
   ],
+  "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
   "PL_TARGET_DENSITY_PCT": 45,
   "MACROS": {
     "matmul_accel": {
@@ -77,7 +81,7 @@
         "u_accel": {
           "location": [
             100,
-            100
+            1469
           ],
           "orientation": "N"
         }
@@ -92,8 +96,6 @@
   "DEFAULT_CORNER": "max_ss_100C_1v60",
   "RUN_POST_GRT_RESIZER_TIMING": true,
   "RUN_POST_GRT_DESIGN_REPAIR": true,
-  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.2,
-  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.2,
   "RUN_HEURISTIC_DIODE_INSERTION": true,
   "HEURISTIC_ANTENNA_THRESHOLD": 200,
   "GRT_ANTENNA_ITERS": 15,
@@ -104,6 +106,9 @@
   "DESIGN_REPAIR_MAX_WIRE_LENGTH": 400,
   "GRT_DESIGN_REPAIR_MAX_WIRE_LENGTH": 400,
   "CTS_CLK_MAX_WIRE_LENGTH": 400,
+  "STA_THREADS": 3,
+  "KLAYOUT_DRC_RUNSET": "dir::klayout_drc_stripes.py",
+  "KLAYOUT_DRC_THREADS": 4,
   "pdk::sky130A": {
     "STD_CELL_LIBRARY": "sky130_fd_sc_hd"
   }

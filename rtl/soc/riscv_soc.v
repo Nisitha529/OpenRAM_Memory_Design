@@ -25,7 +25,8 @@
 //                                       back), bit 1: invalidate L1D (drop all
 //                                       lines); read bit 0: busy
 //   0x4001_0004                CYCLES   free-running cycle counter (read)
-// Memory-mapped accesses never stall: the device answers in the next cycle.
+// Memory-mapped accesses: SYSCTRL answers in the next cycle; the accelerator's
+// requests are registered first, so its reads take one extra (frozen) cycle.
 //
 // The accelerator's DMA reads and writes at the L2, below the L1D. Software
 // keeps them coherent: flush L1D before a DMA job (A and B may still be dirty
@@ -159,13 +160,41 @@ module riscv_soc (
 
   // Fetch needs an instruction every cycle; the memory stage only needs the
   // L1D when it holds a load or store to cached memory (MMIO answers at once).
-  assign freeze = ~i_valid | ((memreadm | memwritem) & ~mem_is_mmio & ~d_valid);
+  // acc_rd_wait: an accelerator register read takes one cycle more (below).
+  wire acc_rd_wait;
+  assign freeze = ~i_valid | ((memreadm | memwritem) & ~mem_is_mmio & ~d_valid) | acc_rd_wait;
 
   // ---------------- memory-mapped devices ----------------
   // A device takes the access when it enters the memory stage (no freeze), so
   // a frozen pipeline does not repeat it; read data is held until replaced.
   wire        mmio_req = dreq_mem & dreq_mmio & ~freeze;
   wire        acc_sel  = mmio_req & ~dreq_addr[16];
+
+  // The accelerator's bus inputs need ~15 ns of setup inside the macro
+  // (address decode across the block), too much after the core's address
+  // path in the same cycle. So its requests are registered here first and
+  // reach the macro one cycle later; read data then arrives one cycle late,
+  // and the core is frozen for that cycle. Requests keep their order.
+  reg         acc_sel_q, acc_we_q;
+  reg  [12:0] acc_addr_q;
+  reg  [31:0] acc_wdata_q;
+  reg         acc_rd_wait_q;
+  always @(posedge clk) begin
+    if (rst_sync) begin
+      acc_sel_q     <= 1'b0;
+      acc_we_q      <= 1'b0;
+      acc_addr_q    <= 13'd0;
+      acc_wdata_q   <= 32'd0;
+      acc_rd_wait_q <= 1'b0;
+    end else begin
+      acc_sel_q     <= acc_sel;
+      acc_we_q      <= dreq_we;
+      acc_addr_q    <= dreq_addr[12:0];
+      acc_wdata_q   <= dreq_wdata;
+      acc_rd_wait_q <= acc_sel & ~dreq_we;
+    end
+  end
+  assign acc_rd_wait = acc_rd_wait_q;
   wire        sys_sel  = mmio_req &  dreq_addr[16];
   wire [31:0] acc_rdata;
   reg  [31:0] sys_rdata;
@@ -251,10 +280,10 @@ module riscv_soc (
   matmul_accel u_accel (
     .clk     (clk),
     .rst_n   (~rst_sync),
-    .sel     (acc_sel),
-    .we      (dreq_we),
-    .addr    (dreq_addr[12:0]),
-    .wdata   (dreq_wdata),
+    .sel     (acc_sel_q),
+    .we      (acc_we_q),
+    .addr    (acc_addr_q),
+    .wdata   (acc_wdata_q),
     .rdata   (acc_rdata),
     .busy    (acc_busy),
     .done    (acc_done),
