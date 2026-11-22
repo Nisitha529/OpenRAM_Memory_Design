@@ -7,12 +7,14 @@ module aludec #
 
   input  [2 : 0] funct3,
   input  [0 : 0] funct7b5,
+  input  [0 : 0] funct7b0,   // instr[25]: 1 selects the M extension (R-type only)
 
   input  [1 : 0] aluop,
 
   output [3 : 0] alucontrol,
 
-  output         aluword
+  output         aluword,
+  output         muldiv      // M extension: result comes from the mul/div unit, not the ALU
 );
 
   wire         rtypesub;
@@ -23,6 +25,10 @@ module aludec #
   assign alucontrol = alucontrol_reg;
 
   assign aluword    = (DATA_WIDTH == 64) && (aluop == 2'b10) && opb3;
+
+  // instr[25] is also an immediate bit in I-type, store and branch encodings,
+  // so only trust it for R-type ALU instructions (OP / OP-32: opb5 = 1).
+  assign muldiv     = (aluop == 2'b10) && opb5 && funct7b0;
 
   always @(*) begin
     case (aluop)

@@ -69,6 +69,7 @@ module riscv_module(
     .op            (instrd[6:0]),
     .funct3        (instrd[14:12]),
     .funct7b5      (instrd[30]),
+    .funct7b0      (instrd[25]),
     .eqe           (eqe),
     .lte           (lte),
     .ltue          (ltue),

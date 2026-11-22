@@ -4,7 +4,8 @@ module controller(
   input  [6:0] op,
   input  [2:0] funct3,
   input        funct7b5,
-  input        eqe,           // branch comparator (execute stage)
+  input        funct7b0,      // instr[25]: M extension
+  input        eqe,          // branch comparator (execute stage)
   input        lte,
   input        ltue,
   input        flushe,
@@ -33,6 +34,7 @@ module controller(
   wire [1:0] alusrcbd;
   wire       branchop;
   wire [2:0] funct3e;
+  wire       muldivd;         // M extension: not consumed until the mul/div unit exists
 
   maindec md (
     .op         (op),
@@ -49,10 +51,14 @@ module controller(
 
   aludec ad (
     .opb5       (op[5]),
+    .opb3       (op[3]),
     .funct3     (funct3),
     .funct7b5   (funct7b5),
+    .funct7b0   (funct7b0),
     .aluop      (aluopd),
-    .alucontrol (alucontrold)
+    .alucontrol (alucontrold),
+    .aluword    (),             // RV64 only: constant 0 at DATA_WIDTH = 32
+    .muldiv     (muldivd)
   );
 
   c_id_iex pipreg_d_to_e (
