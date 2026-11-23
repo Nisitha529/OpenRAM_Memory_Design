@@ -101,13 +101,17 @@ This project builds a minimal understanding of that full picture.
 | Cache | Size | Line | Organisation | SRAMs (OpenRAM, scn4m_subm 0.35 µm) |
 |---|---|---|---|---|
 | L1I | 512 B | 16 B | direct-mapped, read-only | `l1i_tag_array` 10b×32, `sram_128x32_1r1w` |
-| L1D | 512 B | 16 B | direct-mapped, write-back | `l1d_tag_array` 11b×32, `sram_128x32_1r1w` (same macro as L1I) |
+| L1D | 512 B | 16 B | direct-mapped, write-back, byte write mask | `l1d_tag_array` 11b×32, `sram_128x32_1r1w` (same macro as L1I) |
 | L2  | 2 KB | 32 B | 2-way, LRU, write-back | `l2_tag_array` 20b×32, 2× `l2_data_array` 256b×32, `l2_use_array` (flip-flops) |
 
 Notes:
 - OpenCache sizes are in **bits** and its addresses are **word** addresses. One L2
   "word" is a whole L1 line, so an L1 miss is exactly one L2 request.
 - The core uses byte addresses; the caches see `addr[17:2]`, i.e. 256 KB.
+- Byte / half-word stores: the L1D is generated with `write_size = 8`, which adds
+  a 4-bit `wmask` port. OpenCache merges the masked bytes into the line it has
+  read, so the data SRAM needs no write mask (same `sram_128x32_1r1w`). The L2 and
+  DRAM only ever see whole lines.
 - The core freezes (all pipeline registers hold) whenever the instruction or data
   it needs this cycle has not been delivered yet (`rtl/soc/riscv_soc.v`).
 
@@ -165,9 +169,10 @@ OpenRAM configs need `use_nix = False`: otherwise OpenRAM starts Magic through
 
 | Test | Ideal memories | L1I + L1D + L2 + DRAM |
 |---|---|---|
-| `tb_l1d` (2000 random accesses, L1D alone) | – | PASS, DRAM consistent after flush |
-| `test_core` (all instruction types, hazards) | PASS, 694 cycles | PASS, 942 cycles |
-| `test_mem` (4 KB traffic, L1/L2 conflicts) | PASS, 116848 cycles | PASS, 121696 cycles |
+| `tb_l1d` (2000 random accesses with random byte masks, L1D alone) | – | PASS, DRAM consistent after flush |
+| `test_core` (all instruction types, hazards) | PASS, 694 cycles | PASS, 944 cycles |
+| `test_mem` (4 KB traffic, L1/L2 conflicts) | PASS, 116848 cycles | PASS, 121698 cycles |
+| `test_bytes` (`lb lh lbu lhu sb sh`: every offset, forwarding, partial-line misses and evictions, 3 KB byte and half-word loops) | PASS, 104682 cycles | PASS, 108322 cycles |
 
 For every cached run the testbench also checks that
 - the final register file is identical to the ideal run, and
@@ -282,6 +287,8 @@ A dedicated comparator (`eqe`/`lte`/`ltue` in `datapath.v`) removed it.
 **Gate-level verification** – the post-layout netlist with sky130 cell models
 (`sim/run.sh gl-all`) passes `test_core` and `test_mem`, with perfect memories and
 inside the L1I/L1D/L2 hierarchy. Timing is covered by sign-off STA.
+These netlists predate byte/half-word support (the core gained `wmaskm` and
+`dreq_wmask` ports), so `gl-*` needs a new OpenLane run of the current RTL.
 
 ---
 
@@ -465,6 +472,16 @@ failure report because every immediate is decoded wrongly)
   (`TIMING:` comments); the ALU's unused `zero`/`sign` outputs were removed.
 - `alu.v`: `aluresult` declared once (`output reg`) – required by Verilator.
 
-Not supported by the core (unchanged): byte/half-word loads and stores, `ecall`,
-CSRs, `fence`.
+**Byte and half-word loads and stores** (`lb lh lbu lhu sb sh`)
+- Execute stage, `store_align.v`: rs2 is copied into every byte lane it could go
+  to and a byte mask selects the lanes written (`dreq_wmask` / `wmaskm`). Only
+  the 4-bit mask depends on the address.
+- Writeback stage, `load_extend.v`: memory returns the aligned word; the byte or
+  half-word at `addr[1:0]` is picked and sign- or zero-extended after the M/W
+  register, off the cache's read-data path. `funct3` is carried to writeback for it.
+- Misaligned accesses are not trapped: `lh`/`sh` use `addr[1]`, `lw`/`sw` ignore
+  `addr[1:0]`.
+- Memory-mapped devices (accelerator, SYSCTRL) ignore the mask: use `lw`/`sw` there.
+
+Not supported by the core: `ecall`, `ebreak`, CSRs, `fence`, M extension.
 

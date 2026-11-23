@@ -3,17 +3,17 @@
 
 
 
-module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush, csb, web, addr, din, dout, stall, main_csb);
-  reg \$auto$verilog_backend.cc:2189:dump_module$7  = 0;
+module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush, csb, web, wmask, addr, din, dout, stall, main_csb);
+  reg \$auto$verilog_backend.cc:2189:dump_module$8  = 0;
   wire \$1 ;
   wire \$10 ;
-  wire \$101 ;
-  wire [31:0] \$103 ;
-  wire [2:0] \$104 ;
-  wire [8:0] \$106 ;
-  wire \$109 ;
-  wire \$111 ;
-  wire \$113 ;
+  wire [31:0] \$101 ;
+  wire [2:0] \$102 ;
+  wire [8:0] \$104 ;
+  wire \$107 ;
+  wire [31:0] \$109 ;
+  wire [2:0] \$110 ;
+  wire [8:0] \$112 ;
   wire \$115 ;
   wire \$117 ;
   wire \$119 ;
@@ -57,11 +57,11 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   wire \$187 ;
   wire \$189 ;
   wire [5:0] \$19 ;
-  wire [5:0] \$191 ;
-  wire [5:0] \$192 ;
-  wire \$194 ;
-  wire \$196 ;
-  wire \$198 ;
+  wire \$191 ;
+  wire \$193 ;
+  wire \$195 ;
+  wire [5:0] \$197 ;
+  wire [5:0] \$198 ;
   wire \$200 ;
   wire \$202 ;
   wire \$204 ;
@@ -72,11 +72,11 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   wire \$212 ;
   wire \$214 ;
   wire \$216 ;
-  wire [5:0] \$218 ;
-  wire [5:0] \$219 ;
-  wire \$221 ;
-  wire \$223 ;
-  wire \$225 ;
+  wire \$218 ;
+  wire \$220 ;
+  wire \$222 ;
+  wire [5:0] \$224 ;
+  wire [5:0] \$225 ;
   wire \$227 ;
   wire \$229 ;
   wire \$23 ;
@@ -108,6 +108,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   wire \$277 ;
   wire \$279 ;
   wire \$281 ;
+  wire \$283 ;
+  wire \$285 ;
+  wire \$287 ;
   wire \$29 ;
   wire \$3 ;
   wire \$31 ;
@@ -145,9 +148,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   wire \$89 ;
   wire \$91 ;
   wire \$93 ;
-  wire [31:0] \$95 ;
-  wire [2:0] \$96 ;
-  wire [8:0] \$98 ;
+  wire \$95 ;
+  wire \$97 ;
+  wire \$99 ;
   input [15:0] addr;
   wire [15:0] addr;
   input clk;
@@ -202,106 +205,113 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   wire web;
   reg web_reg = 1'h0;
   reg web_reg_next;
-  assign \$95  = data_read_dout0 >> \$98 ;
-  assign \$101  = ~  main_stall;
-  assign \$104  = 1'h0 +  offset;
-  assign \$106  = \$104  *  6'h20;
-  assign \$103  = main_dout >> \$106 ;
+  input [3:0] wmask;
+  wire [3:0] wmask;
+  reg [3:0] wmask_reg = 4'h0;
+  reg [3:0] wmask_reg_next;
+  assign \$99  = tag_read_dout0[10] &  \$97 ;
+  assign \$102  = 1'h0 +  offset;
+  assign \$104  = \$102  *  6'h20;
+  assign \$101  = data_read_dout0 >> \$104 ;
+  assign \$107  = ~  main_stall;
   assign \$10  = ~  tag_read_dout0[9];
-  assign \$109  = ~  main_stall;
-  assign \$111  = tag_read_dout0[9] &  \$109 ;
-  assign \$113  = tag_read_dout0[8:0] ==  tag;
-  assign \$115  = tag_read_dout0[10] &  \$113 ;
-  assign \$117  = ~  web_reg;
-  assign \$119  = ~  main_stall;
-  assign \$121  = ~  main_stall;
-  assign \$123  = tag_read_dout0[9] &  \$121 ;
-  assign \$125  = tag_read_dout0[8:0] ==  tag;
-  assign \$127  = tag_read_dout0[10] &  \$125 ;
+  assign \$110  = 1'h0 +  offset;
+  assign \$112  = \$110  *  6'h20;
+  assign \$109  = main_dout >> \$112 ;
+  assign \$115  = ~  main_stall;
+  assign \$117  = tag_read_dout0[9] &  \$115 ;
+  assign \$119  = tag_read_dout0[8:0] ==  tag;
+  assign \$121  = tag_read_dout0[10] &  \$119 ;
+  assign \$123  = ~  web_reg;
+  assign \$125  = ~  main_stall;
+  assign \$127  = ~  main_stall;
   assign \$12  = ~  main_stall;
-  assign \$129  = ~  web_reg;
-  assign \$131  = ~  main_stall;
-  assign \$133  = ~  main_stall;
-  assign \$135  = tag_read_dout0[9] &  \$133 ;
-  assign \$137  = tag_read_dout0[8:0] ==  tag;
-  assign \$139  = tag_read_dout0[10] &  \$137 ;
-  assign \$141  = ~  web_reg;
-  assign \$143  = ~  main_stall;
-  assign \$145  = ~  web_reg;
-  assign \$147  = tag_read_dout0[8:0] ==  tag;
+  assign \$129  = tag_read_dout0[9] &  \$127 ;
+  assign \$131  = tag_read_dout0[8:0] ==  tag;
+  assign \$133  = tag_read_dout0[10] &  \$131 ;
+  assign \$135  = ~  web_reg;
+  assign \$137  = ~  main_stall;
+  assign \$139  = ~  main_stall;
+  assign \$141  = tag_read_dout0[9] &  \$139 ;
+  assign \$143  = tag_read_dout0[8:0] ==  tag;
+  assign \$145  = tag_read_dout0[10] &  \$143 ;
+  assign \$147  = ~  web_reg;
   assign \$14  = \$10  |  \$12 ;
-  assign \$149  = tag_read_dout0[10] &  \$147 ;
+  assign \$149  = ~  main_stall;
   assign \$151  = ~  web_reg;
-  assign \$153  = ~  main_stall;
-  assign \$155  = tag_read_dout0[8:0] ==  tag;
-  assign \$157  = tag_read_dout0[10] &  \$155 ;
-  assign \$159  = ~  web_reg;
-  assign \$161  = ~  main_stall;
-  assign \$163  = tag_read_dout0[8:0] ==  tag;
-  assign \$165  = tag_read_dout0[10] &  \$163 ;
-  assign \$167  = ~  web_reg;
-  assign \$169  = ~  main_stall;
-  assign \$171  = ~  web_reg;
-  assign \$173  = ~  tag_read_dout0[9];
+  assign \$153  = tag_read_dout0[8:0] ==  tag;
+  assign \$155  = tag_read_dout0[10] &  \$153 ;
+  assign \$157  = ~  web_reg;
+  assign \$159  = ~  main_stall;
+  assign \$161  = tag_read_dout0[8:0] ==  tag;
+  assign \$163  = tag_read_dout0[10] &  \$161 ;
+  assign \$165  = ~  web_reg;
+  assign \$167  = ~  main_stall;
+  assign \$169  = tag_read_dout0[8:0] ==  tag;
+  assign \$171  = tag_read_dout0[10] &  \$169 ;
+  assign \$173  = ~  web_reg;
   assign \$175  = ~  main_stall;
-  assign \$177  = \$173  |  \$175 ;
-  assign \$179  = tag_read_dout0[8:0] ==  tag;
-  assign \$181  = tag_read_dout0[10] &  \$179 ;
-  assign \$183  = ~  main_stall;
-  assign \$185  = ~  tag_read_dout0[9];
-  assign \$187  = ~  main_stall;
-  assign \$189  = \$185  |  \$187 ;
-  assign \$192  = set +  1'h1;
-  assign \$194  = tag_read_dout0[8:0] ==  tag;
-  assign \$196  = tag_read_dout0[10] &  \$194 ;
-  assign \$198  = ~  main_stall;
+  assign \$177  = ~  web_reg;
+  assign \$179  = ~  tag_read_dout0[9];
+  assign \$181  = ~  main_stall;
+  assign \$183  = \$179  |  \$181 ;
+  assign \$185  = tag_read_dout0[8:0] ==  tag;
+  assign \$187  = tag_read_dout0[10] &  \$185 ;
+  assign \$189  = ~  main_stall;
+  assign \$191  = ~  tag_read_dout0[9];
+  assign \$193  = ~  main_stall;
+  assign \$195  = \$191  |  \$193 ;
+  assign \$198  = set +  1'h1;
   assign \$1  = tag_read_dout0[8:0] ==  tag;
   assign \$19  = set +  1'h1;
-  assign \$200  = ~  tag_read_dout0[9];
-  assign \$202  = ~  main_stall;
-  assign \$204  = \$200  |  \$202 ;
-  assign \$206  = tag_read_dout0[8:0] ==  tag;
-  assign \$208  = tag_read_dout0[10] &  \$206 ;
-  assign \$210  = ~  main_stall;
-  assign \$212  = ~  tag_read_dout0[9];
-  assign \$214  = ~  main_stall;
-  assign \$216  = \$212  |  \$214 ;
+  assign \$200  = tag_read_dout0[8:0] ==  tag;
+  assign \$202  = tag_read_dout0[10] &  \$200 ;
+  assign \$204  = ~  main_stall;
+  assign \$206  = ~  tag_read_dout0[9];
+  assign \$208  = ~  main_stall;
+  assign \$210  = \$206  |  \$208 ;
+  assign \$212  = tag_read_dout0[8:0] ==  tag;
+  assign \$214  = tag_read_dout0[10] &  \$212 ;
+  assign \$216  = ~  main_stall;
+  assign \$218  = ~  tag_read_dout0[9];
   assign \$21  = tag_read_dout0[8:0] ==  tag;
-  assign \$219  = set +  1'h1;
-  assign \$221  = tag_read_dout0[8:0] ==  tag;
-  assign \$223  = tag_read_dout0[10] &  \$221 ;
-  assign \$225  = ~  main_stall;
-  assign \$227  = ~  main_stall;
-  assign \$229  = tag_read_dout0[9] &  \$227 ;
+  assign \$220  = ~  main_stall;
+  assign \$222  = \$218  |  \$220 ;
+  assign \$225  = set +  1'h1;
+  assign \$227  = tag_read_dout0[8:0] ==  tag;
+  assign \$229  = tag_read_dout0[10] &  \$227 ;
   assign \$231  = ~  main_stall;
-  assign \$233  = tag_read_dout0[10] &  tag_read_dout0[9];
-  assign \$235  = tag_read_dout0[8:0] ==  tag;
-  assign \$237  = tag_read_dout0[10] &  \$235 ;
+  assign \$233  = ~  main_stall;
+  assign \$235  = tag_read_dout0[9] &  \$233 ;
+  assign \$237  = ~  main_stall;
   assign \$23  = tag_read_dout0[10] &  \$21 ;
-  assign \$239  = ~  main_stall;
-  assign \$241  = ~  main_stall;
-  assign \$243  = ~  main_stall;
+  assign \$239  = tag_read_dout0[10] &  tag_read_dout0[9];
+  assign \$241  = tag_read_dout0[8:0] ==  tag;
+  assign \$243  = tag_read_dout0[10] &  \$241 ;
   assign \$245  = ~  main_stall;
-  assign \$247  = tag_read_dout0[9] &  \$245 ;
+  assign \$247  = ~  main_stall;
   assign \$249  = ~  main_stall;
-  assign \$251  = tag_read_dout0[10] &  tag_read_dout0[9];
-  assign \$253  = ~  main_stall;
+  assign \$251  = ~  main_stall;
+  assign \$253  = tag_read_dout0[9] &  \$251 ;
   assign \$255  = ~  main_stall;
-  assign \$257  = ~  main_stall;
+  assign \$257  = tag_read_dout0[10] &  tag_read_dout0[9];
   assign \$25  = ~  main_stall;
   assign \$259  = ~  main_stall;
-  assign \$261  = tag_read_dout0[9] &  \$259 ;
+  assign \$261  = ~  main_stall;
   assign \$263  = ~  main_stall;
-  assign \$265  = tag_read_dout0[10] &  tag_read_dout0[9];
-  assign \$267  = ~  main_stall;
+  assign \$265  = ~  main_stall;
+  assign \$267  = tag_read_dout0[9] &  \$265 ;
   assign \$269  = ~  main_stall;
-  assign \$271  = ~  main_stall;
+  assign \$271  = tag_read_dout0[10] &  tag_read_dout0[9];
   assign \$273  = ~  main_stall;
-  assign \$275  = tag_read_dout0[9] &  \$273 ;
+  assign \$275  = ~  main_stall;
   assign \$277  = ~  main_stall;
   assign \$27  = tag_read_dout0[8:0] ==  tag;
-  assign \$279  = tag_read_dout0[10] &  tag_read_dout0[9];
-  assign \$281  = ~  main_stall;
+  assign \$279  = ~  main_stall;
+  assign \$281  = tag_read_dout0[9] &  \$279 ;
+  assign \$283  = ~  main_stall;
+  assign \$285  = tag_read_dout0[10] &  tag_read_dout0[9];
+  assign \$287  = ~  main_stall;
   assign \$29  = tag_read_dout0[10] &  \$27 ;
   assign \$31  = ~  main_stall;
   assign \$33  = tag_read_dout0[8:0] ==  tag;
@@ -311,38 +321,40 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
   assign \$39  = tag_read_dout0[8:0] ==  tag;
   assign \$41  = tag_read_dout0[10] &  \$39 ;
   assign \$43  = ~  main_stall;
-  assign \$45  = set ==  5'h1f;
-  assign \$47  = ~  tag_read_dout0[9];
+  assign \$45  = tag_read_dout0[8:0] ==  tag;
+  assign \$47  = tag_read_dout0[10] &  \$45 ;
   assign \$49  = ~  main_stall;
-  assign \$51  = \$47  |  \$49 ;
-  assign \$55  = set ==  5'h1f;
-  assign \$57  = \$53  &  \$55 ;
+  assign \$51  = set ==  5'h1f;
+  assign \$53  = ~  tag_read_dout0[9];
+  assign \$55  = ~  main_stall;
+  assign \$57  = \$53  |  \$55 ;
   assign \$5  = ~  main_stall;
-  assign \$59  = ~  csb;
-  assign \$61  = tag_read_dout0[10] &  tag_read_dout0[9];
-  assign \$63  = tag_read_dout0[8:0] ==  tag;
-  assign \$65  = tag_read_dout0[10] &  \$63 ;
-  assign \$67  = ~  web_reg;
-  assign \$69  = set ==  addr[6:2];
-  assign \$71  = \$67  &  \$69 ;
-  assign \$73  = ~  main_stall;
-  assign \$75  = ~  main_stall;
-  assign \$77  = set ==  addr[6:2];
+  assign \$61  = set ==  5'h1f;
+  assign \$63  = \$59  &  \$61 ;
+  assign \$65  = ~  csb;
+  assign \$67  = tag_read_dout0[10] &  tag_read_dout0[9];
+  assign \$69  = tag_read_dout0[8:0] ==  tag;
+  assign \$71  = tag_read_dout0[10] &  \$69 ;
+  assign \$73  = ~  web_reg;
+  assign \$75  = set ==  addr[6:2];
+  assign \$77  = \$73  &  \$75 ;
   assign \$79  = ~  main_stall;
   assign \$81  = ~  main_stall;
-  assign \$83  = |  set;
-  assign \$85  = tag_read_dout0[8:0] ==  tag;
-  assign \$87  = tag_read_dout0[10] &  \$85 ;
+  assign \$83  = set ==  addr[6:2];
+  assign \$85  = ~  main_stall;
+  assign \$87  = ~  main_stall;
   assign \$8  = set +  1'h1;
-  assign \$89  = ~  main_stall;
+  assign \$89  = |  set;
   assign \$91  = tag_read_dout0[8:0] ==  tag;
   assign \$93  = tag_read_dout0[10] &  \$91 ;
-  assign \$96  = 1'h0 +  offset;
-  assign \$98  = \$96  *  6'h20;
+  assign \$95  = ~  main_stall;
+  assign \$97  = tag_read_dout0[8:0] ==  tag;
   always @(posedge clk)
     state <= state_next;
   always @(posedge clk)
     din_reg <= din_reg_next;
+  always @(posedge clk)
+    wmask_reg <= wmask_reg_next;
   always @(posedge clk)
     web_reg <= web_reg_next;
   always @(posedge clk)
@@ -372,7 +384,59 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     .dout1(data_read_dout0)
   );
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
+    web_reg_next = web_reg;
+    casez (state)
+      4'h0:
+          ;
+      4'h1:
+          ;
+      4'h2:
+          web_reg_next = web;
+      4'h3:
+          casez (\$35 )
+            1'h1:
+                web_reg_next = web;
+          endcase
+      4'h7:
+          casez (\$37 )
+            1'h1:
+                web_reg_next = web;
+          endcase
+    endcase
+    casez (rst)
+      1'h1:
+          web_reg_next = 1'h1;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
+    wmask_reg_next = wmask_reg;
+    casez (state)
+      4'h0:
+          ;
+      4'h1:
+          ;
+      4'h2:
+          wmask_reg_next = wmask;
+      4'h3:
+          casez (\$41 )
+            1'h1:
+                wmask_reg_next = wmask;
+          endcase
+      4'h7:
+          casez (\$43 )
+            1'h1:
+                wmask_reg_next = wmask;
+          endcase
+    endcase
+    casez (rst)
+      1'h1:
+          wmask_reg_next = 4'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     din_reg_next = din_reg;
     casez (state)
       4'h0:
@@ -382,12 +446,12 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h2:
           din_reg_next = din;
       4'h3:
-          casez (\$41 )
+          casez (\$47 )
             1'h1:
                 din_reg_next = din;
           endcase
       4'h7:
-          casez (\$43 )
+          casez (\$49 )
             1'h1:
                 din_reg_next = din;
           endcase
@@ -398,27 +462,27 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     state_next = state;
     casez (state)
       4'h0:
-          casez (\$45 )
+          casez (\$51 )
             1'h1:
                 state_next = 4'h2;
           endcase
       4'h1:
-          casez (\$57 )
+          casez (\$63 )
             1'h1:
                 state_next = 4'h2;
           endcase
       4'h2:
-          casez (\$59 )
+          casez (\$65 )
             1'h1:
                 state_next = 4'h3;
           endcase
       4'h3:
         begin
-          casez (\$61 )
+          casez (\$67 )
             1'h1:
                 casez (main_stall)
                   1'h1:
@@ -434,28 +498,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
                       state_next = 4'h7;
                 endcase
           endcase
-          casez (\$65 )
-            1'h1:
-                casez (csb)
-                  1'h1:
-                      state_next = 4'h2;
-                  default:
-                      casez (\$71 )
-                        1'h1:
-                            state_next = 4'h9;
-                        default:
-                            state_next = 4'h3;
-                      endcase
-                endcase
-          endcase
-        end
-      4'h6:
-          casez (\$73 )
-            1'h1:
-                state_next = 4'h7;
-          endcase
-      4'h7:
-          casez (\$75 )
+          casez (\$71 )
             1'h1:
                 casez (csb)
                   1'h1:
@@ -469,13 +512,34 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
                       endcase
                 endcase
           endcase
-      4'h4:
+        end
+      4'h6:
           casez (\$79 )
+            1'h1:
+                state_next = 4'h7;
+          endcase
+      4'h7:
+          casez (\$81 )
+            1'h1:
+                casez (csb)
+                  1'h1:
+                      state_next = 4'h2;
+                  default:
+                      casez (\$83 )
+                        1'h1:
+                            state_next = 4'h9;
+                        default:
+                            state_next = 4'h3;
+                      endcase
+                endcase
+          endcase
+      4'h4:
+          casez (\$85 )
             1'h1:
                 state_next = 4'h5;
           endcase
       4'h5:
-          casez (\$81 )
+          casez (\$87 )
             1'h1:
                 state_next = 4'h7;
           endcase
@@ -486,7 +550,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
     casez (flush)
       1'h1:
-          casez (\$83 )
+          casez (\$89 )
             1'h1:
                 state_next = 4'h1;
             default:
@@ -499,58 +563,58 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     stall = 1'h1;
     casez (state)
       4'h2:
           stall = 1'h0;
       4'h3:
-          casez (\$87 )
+          casez (\$93 )
             1'h1:
                 stall = 1'h0;
           endcase
       4'h7:
-          casez (\$89 )
+          casez (\$95 )
             1'h1:
                 stall = 1'h0;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     dout = 32'd0;
     casez (state)
       4'h2:
           ;
       4'h3:
-          casez (\$93 )
+          casez (\$99 )
             1'h1:
-                dout = \$95 ;
+                dout = \$101 ;
           endcase
       4'h7:
-          casez (\$101 )
+          casez (\$107 )
             1'h1:
-                dout = \$103 ;
+                dout = \$109 ;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_write_csb0 = 1'h1;
     casez (state)
       4'h0:
           tag_write_csb0 = 1'h0;
       4'h1:
-          casez (\$111 )
+          casez (\$117 )
             1'h1:
                 tag_write_csb0 = 1'h0;
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$115 )
+          casez (\$121 )
             1'h1:
-                casez (\$117 )
+                casez (\$123 )
                   1'h1:
                       tag_write_csb0 = 1'h0;
                 endcase
@@ -558,29 +622,29 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$119 )
+          casez (\$125 )
             1'h1:
                 tag_write_csb0 = 1'h0;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_write_addr0 = 5'h00;
     casez (state)
       4'h0:
           tag_write_addr0 = set;
       4'h1:
-          casez (\$123 )
+          casez (\$129 )
             1'h1:
                 tag_write_addr0 = set;
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$127 )
+          casez (\$133 )
             1'h1:
-                casez (\$129 )
+                casez (\$135 )
                   1'h1:
                       tag_write_addr0 = set;
                 endcase
@@ -588,29 +652,29 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$131 )
+          casez (\$137 )
             1'h1:
                 tag_write_addr0 = set;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_write_din0 = 11'h000;
     casez (state)
       4'h0:
           tag_write_din0 = 11'h000;
       4'h1:
-          casez (\$135 )
+          casez (\$141 )
             1'h1:
                 tag_write_din0 = { 2'h2, tag_read_dout0[8:0] };
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$139 )
+          casez (\$145 )
             1'h1:
-                casez (\$141 )
+                casez (\$147 )
                   1'h1:
                       tag_write_din0 = { 2'h3, tag };
                 endcase
@@ -618,14 +682,14 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$143 )
+          casez (\$149 )
             1'h1:
-                tag_write_din0 = { 1'h1, \$145 , tag };
+                tag_write_din0 = { 1'h1, \$151 , tag };
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     data_write_csb0 = 1'h1;
     casez (state)
       4'h0:
@@ -635,9 +699,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h2:
           ;
       4'h3:
-          casez (\$149 )
+          casez (\$155 )
             1'h1:
-                casez (\$151 )
+                casez (\$157 )
                   1'h1:
                       data_write_csb0 = 1'h0;
                 endcase
@@ -645,14 +709,14 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$153 )
+          casez (\$159 )
             1'h1:
                 data_write_csb0 = 1'h0;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     data_write_addr0 = 5'h00;
     casez (state)
       4'h0:
@@ -662,9 +726,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h2:
           ;
       4'h3:
-          casez (\$157 )
+          casez (\$163 )
             1'h1:
-                casez (\$159 )
+                casez (\$165 )
                   1'h1:
                       data_write_addr0 = set;
                 endcase
@@ -672,14 +736,14 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$161 )
+          casez (\$167 )
             1'h1:
                 data_write_addr0 = set;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     data_write_din0 = 128'h00000000000000000000000000000000;
     casez (state)
       4'h0:
@@ -689,21 +753,89 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h2:
           ;
       4'h3:
-          casez (\$165 )
+          casez (\$171 )
             1'h1:
-                casez (\$167 )
+                casez (\$173 )
                   1'h1:
                     begin
                       data_write_din0 = data_read_dout0;
                       casez (offset)
                         2'h0:
-                            data_write_din0[31:0] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[7:0] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[15:8] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[23:16] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[31:24] = din_reg[31:24];
+                            endcase
+                          end
                         2'h1:
-                            data_write_din0[63:32] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[39:32] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[47:40] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[55:48] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[63:56] = din_reg[31:24];
+                            endcase
+                          end
                         2'h2:
-                            data_write_din0[95:64] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[71:64] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[79:72] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[87:80] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[95:88] = din_reg[31:24];
+                            endcase
+                          end
                         2'h3:
-                            data_write_din0[127:96] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[103:96] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[111:104] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[119:112] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[127:120] = din_reg[31:24];
+                            endcase
+                          end
                       endcase
                     end
                 endcase
@@ -711,21 +843,89 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h6:
           ;
       4'h7:
-          casez (\$169 )
+          casez (\$175 )
             1'h1:
               begin
                 data_write_din0 = main_dout;
-                casez (\$171 )
+                casez (\$177 )
                   1'h1:
                       casez (offset)
                         2'h0:
-                            data_write_din0[31:0] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[7:0] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[15:8] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[23:16] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[31:24] = din_reg[31:24];
+                            endcase
+                          end
                         2'h1:
-                            data_write_din0[63:32] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[39:32] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[47:40] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[55:48] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[63:56] = din_reg[31:24];
+                            endcase
+                          end
                         2'h2:
-                            data_write_din0[95:64] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[71:64] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[79:72] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[87:80] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[95:88] = din_reg[31:24];
+                            endcase
+                          end
                         2'h3:
-                            data_write_din0[127:96] = din_reg;
+                          begin
+                            casez (wmask_reg[0])
+                              1'h1:
+                                  data_write_din0[103:96] = din_reg[7:0];
+                            endcase
+                            casez (wmask_reg[1])
+                              1'h1:
+                                  data_write_din0[111:104] = din_reg[15:8];
+                            endcase
+                            casez (wmask_reg[2])
+                              1'h1:
+                                  data_write_din0[119:112] = din_reg[23:16];
+                            endcase
+                            casez (wmask_reg[3])
+                              1'h1:
+                                  data_write_din0[127:120] = din_reg[31:24];
+                            endcase
+                          end
                       endcase
                 endcase
               end
@@ -733,7 +933,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_read_csb0 = 1'h0;
     casez (state)
       4'h0:
@@ -741,7 +941,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h1:
         begin
           tag_read_csb0 = 1'h0;
-          casez (\$177 )
+          casez (\$183 )
             1'h1:
                 tag_read_csb0 = 1'h0;
           endcase
@@ -751,7 +951,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h3:
         begin
           tag_read_csb0 = 1'h0;
-          casez (\$181 )
+          casez (\$187 )
             1'h1:
                 tag_read_csb0 = 1'h0;
           endcase
@@ -761,7 +961,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h7:
         begin
           tag_read_csb0 = 1'h0;
-          casez (\$183 )
+          casez (\$189 )
             1'h1:
                 tag_read_csb0 = 1'h0;
           endcase
@@ -781,7 +981,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_read_addr0 = 5'h00;
     casez (state)
       4'h0:
@@ -789,9 +989,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h1:
         begin
           tag_read_addr0 = set;
-          casez (\$189 )
+          casez (\$195 )
             1'h1:
-                tag_read_addr0 = \$192 [4:0];
+                tag_read_addr0 = \$198 [4:0];
           endcase
         end
       4'h2:
@@ -799,7 +999,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h3:
         begin
           tag_read_addr0 = set;
-          casez (\$196 )
+          casez (\$202 )
             1'h1:
                 tag_read_addr0 = addr[6:2];
           endcase
@@ -809,7 +1009,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h7:
         begin
           tag_read_addr0 = set;
-          casez (\$198 )
+          casez (\$204 )
             1'h1:
                 tag_read_addr0 = addr[6:2];
           endcase
@@ -829,7 +1029,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     data_read_csb0 = 1'h0;
     casez (state)
       4'h0:
@@ -837,7 +1037,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h1:
         begin
           data_read_csb0 = 1'h0;
-          casez (\$204 )
+          casez (\$210 )
             1'h1:
                 data_read_csb0 = 1'h0;
           endcase
@@ -847,7 +1047,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h3:
         begin
           data_read_csb0 = 1'h0;
-          casez (\$208 )
+          casez (\$214 )
             1'h1:
                 data_read_csb0 = 1'h0;
           endcase
@@ -857,7 +1057,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h7:
         begin
           data_read_csb0 = 1'h0;
-          casez (\$210 )
+          casez (\$216 )
             1'h1:
                 data_read_csb0 = 1'h0;
           endcase
@@ -877,7 +1077,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     data_read_addr0 = 5'h00;
     casez (state)
       4'h0:
@@ -885,9 +1085,9 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h1:
         begin
           data_read_addr0 = set;
-          casez (\$216 )
+          casez (\$222 )
             1'h1:
-                data_read_addr0 = \$219 [4:0];
+                data_read_addr0 = \$225 [4:0];
           endcase
         end
       4'h2:
@@ -895,7 +1095,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h3:
         begin
           data_read_addr0 = set;
-          casez (\$223 )
+          casez (\$229 )
             1'h1:
                 data_read_addr0 = addr[6:2];
           endcase
@@ -905,7 +1105,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h7:
         begin
           data_read_addr0 = set;
-          casez (\$225 )
+          casez (\$231 )
             1'h1:
                 data_read_addr0 = addr[6:2];
           endcase
@@ -925,13 +1125,13 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     main_csb = 1'h1;
     casez (state)
       4'h0:
           ;
       4'h1:
-          casez (\$229 )
+          casez (\$235 )
             1'h1:
                 main_csb = 1'h0;
           endcase
@@ -939,56 +1139,56 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
           ;
       4'h3:
         begin
-          casez (\$231 )
+          casez (\$237 )
             1'h1:
-                casez (\$233 )
+                casez (\$239 )
                   1'h1:
                       main_csb = 1'h0;
                   default:
                       main_csb = 1'h0;
                 endcase
           endcase
-          casez (\$237 )
+          casez (\$243 )
             1'h1:
                 main_csb = 1'h1;
           endcase
         end
       4'h6:
-          casez (\$239 )
+          casez (\$245 )
             1'h1:
                 main_csb = 1'h0;
           endcase
       4'h7:
           ;
       4'h4:
-          casez (\$241 )
+          casez (\$247 )
             1'h1:
                 main_csb = 1'h0;
           endcase
       4'h5:
-          casez (\$243 )
+          casez (\$249 )
             1'h1:
                 main_csb = 1'h0;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     main_web = 1'h1;
     casez (state)
       4'h0:
           ;
       4'h1:
-          casez (\$247 )
+          casez (\$253 )
             1'h1:
                 main_web = 1'h0;
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$249 )
+          casez (\$255 )
             1'h1:
-                casez (\$251 )
+                casez (\$257 )
                   1'h1:
                       main_web = 1'h0;
                   default:
@@ -996,41 +1196,41 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
                 endcase
           endcase
       4'h6:
-          casez (\$253 )
+          casez (\$259 )
             1'h1:
                 main_web = 1'h1;
           endcase
       4'h7:
           ;
       4'h4:
-          casez (\$255 )
+          casez (\$261 )
             1'h1:
                 main_web = 1'h0;
           endcase
       4'h5:
-          casez (\$257 )
+          casez (\$263 )
             1'h1:
                 main_web = 1'h1;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     main_addr = 14'h0000;
     casez (state)
       4'h0:
           ;
       4'h1:
-          casez (\$261 )
+          casez (\$267 )
             1'h1:
                 main_addr = { tag_read_dout0[8:0], set };
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$263 )
+          casez (\$269 )
             1'h1:
-                casez (\$265 )
+                casez (\$271 )
                   1'h1:
                       main_addr = { tag_read_dout0[8:0], set };
                   default:
@@ -1038,41 +1238,41 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
                 endcase
           endcase
       4'h6:
-          casez (\$267 )
+          casez (\$273 )
             1'h1:
                 main_addr = { tag, set };
           endcase
       4'h7:
           ;
       4'h4:
-          casez (\$269 )
+          casez (\$275 )
             1'h1:
                 main_addr = { tag_read_dout0[8:0], set };
           endcase
       4'h5:
-          casez (\$271 )
+          casez (\$277 )
             1'h1:
                 main_addr = { tag, set };
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     main_din = 128'h00000000000000000000000000000000;
     casez (state)
       4'h0:
           ;
       4'h1:
-          casez (\$275 )
+          casez (\$281 )
             1'h1:
                 main_din = data_read_dout0;
           endcase
       4'h2:
           ;
       4'h3:
-          casez (\$277 )
+          casez (\$283 )
             1'h1:
-                casez (\$279 )
+                casez (\$285 )
                   1'h1:
                       main_din = data_read_dout0;
                 endcase
@@ -1082,14 +1282,14 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
       4'h7:
           ;
       4'h4:
-          casez (\$281 )
+          casez (\$287 )
             1'h1:
                 main_din = data_read_dout0;
           endcase
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     tag_next = tag;
     casez (state)
       4'h0:
@@ -1115,7 +1315,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     set_next = set;
     casez (state)
       4'h0:
@@ -1148,7 +1348,7 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
+    if (\$auto$verilog_backend.cc:2189:dump_module$8 ) begin end
     offset_next = offset;
     casez (state)
       4'h0:
@@ -1173,36 +1373,10 @@ module l1d(main_web, main_addr, main_din, main_dout, main_stall, clk, rst, flush
           offset_next = 2'h0;
     endcase
   end
-  always @* begin
-    if (\$auto$verilog_backend.cc:2189:dump_module$7 ) begin end
-    web_reg_next = web_reg;
-    casez (state)
-      4'h0:
-          ;
-      4'h1:
-          ;
-      4'h2:
-          web_reg_next = web;
-      4'h3:
-          casez (\$35 )
-            1'h1:
-                web_reg_next = web;
-          endcase
-      4'h7:
-          casez (\$37 )
-            1'h1:
-                web_reg_next = web;
-          endcase
-    endcase
-    casez (rst)
-      1'h1:
-          web_reg_next = 1'h1;
-    endcase
-  end
   assign \$7  = \$8 ;
   assign \$18  = \$19 ;
-  assign \$191  = \$192 ;
-  assign \$218  = \$219 ;
+  assign \$197  = \$198 ;
+  assign \$224  = \$225 ;
   assign \$16  = \$14 ;
-  assign \$53  = \$51 ;
+  assign \$59  = \$57 ;
 endmodule

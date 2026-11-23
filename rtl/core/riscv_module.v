@@ -1,8 +1,14 @@
 /*
   Name: RISC V RV32I
-  Description: Implements 27 instructions
+  Description: RV32I without fence / ecall / ebreak / CSRs
                5 stage pipeline
                Hazard Unit is present for handling both control and data hazards
+
+  Loads and stores of bytes and half-words (lb lh lbu lhu sb sh):
+    writedatam / dreq_wdata carry the store data already copied into its byte
+    lanes, and wmaskm / dreq_wmask say which bytes to write (bit i = byte i).
+    Memory always returns the aligned word; the core picks and extends the
+    byte or half-word itself. Misaligned accesses are not trapped.
 
   CACHE: extra ports for synchronous memories / caches (answer one cycle later).
     freeze        - hold the whole pipeline (a cache has not answered yet)
@@ -22,6 +28,7 @@ module riscv_module(
   output        memwritem,
   output [31:0] aluresultm,
   output [31:0] writedatam,
+  output [3:0]  wmaskm,
   input  [31:0] readdatam,
   // CACHE ports
   input         freeze,
@@ -30,7 +37,8 @@ module riscv_module(
   output        dreq_we,
   output        dreq_re,
   output [31:0] dreq_addr,
-  output [31:0] dreq_wdata
+  output [31:0] dreq_wdata,
+  output [3:0]  dreq_wmask
 );
 
   wire        alusrcae;
@@ -53,7 +61,9 @@ module riscv_module(
   wire [4:0]  rde, rdm, rdw;
   wire [1:0]  forwardae, forwardbe;
   wire        memwritee, memreade;
-  wire [31:0] aluresulte, writedatae;
+  wire [31:0] aluresulte, storedatae;
+  wire [3:0]  wmaske;
+  wire [2:0]  funct3e, funct3w;
 
   // CACHE: the data request that should be served in the next cycle is the
   // execute-stage access (it moves to memory stage at the next edge). While
@@ -61,7 +71,8 @@ module riscv_module(
   assign dreq_we    = freeze ? memwritem  : memwritee;
   assign dreq_re    = freeze ? memreadm   : memreade;
   assign dreq_addr  = freeze ? aluresultm : aluresulte;
-  assign dreq_wdata = freeze ? writedatam : writedatae;
+  assign dreq_wdata = freeze ? writedatam : storedatae;
+  assign dreq_wmask = freeze ? wmaskm     : wmaske;
 
   controller controller_01 (
     .clk           (clk),
@@ -88,7 +99,9 @@ module riscv_module(
     .regwritem     (regwritem),
     .regwritew     (regwritew),
     .immsrcd        (immsrcd),
-    .alucontrole   (alucontrole)
+    .alucontrole   (alucontrole),
+    .funct3e       (funct3e),
+    .funct3w       (funct3w)
   );
 
   hazardunit hazardunit_01 (
@@ -122,6 +135,8 @@ module riscv_module(
     .regwritew     (regwritew),
     .immsrcd       (immsrcd),
     .alucontrole   (alucontrole),
+    .funct3e       (funct3e),
+    .funct3w       (funct3w),
     .eqe           (eqe),
     .lte           (lte),
     .ltue          (ltue),
@@ -130,6 +145,7 @@ module riscv_module(
     .instrd        (instrd),
     .aluresultm    (aluresultm),
     .writedatam    (writedatam),
+    .wmaskm        (wmaskm),
     .readdatam     (readdatam),
     .forwardae     (forwardae),
     .forwardbe     (forwardbe),
@@ -147,7 +163,8 @@ module riscv_module(
     .freeze        (freeze),
     .imem_addr     (imem_addr),
     .aluresulte    (aluresulte),
-    .writedatae    (writedatae)
+    .storedatae    (storedatae),
+    .wmaske        (wmaske)
   );
 
 endmodule

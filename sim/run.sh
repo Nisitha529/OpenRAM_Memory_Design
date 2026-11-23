@@ -14,7 +14,7 @@
 #     NETLIST=<file.nl.v> picks the netlist (default: newest OpenLane run)
 #   MAX_CYCLES=<n> simulation timeout (default 500000)
 #   SRAM_TECH=scn4m_subm|sky130|ff selects the cache memories (see below)
-# <prog> is a test name from sw/ (test_core, test_mem).
+# <prog> is a test name from sw/ (test_core, test_mem, test_bytes).
 set -e
 cd "$(dirname "$0")"
 ROOT=..
@@ -112,7 +112,7 @@ case "$1" in
   cached) run_prog cached "${2:-test_core}" ;;
   all)
     run_l1d
-    for p in test_core test_mem; do
+    for p in test_core test_mem test_bytes; do
       run_prog ideal  $p
       run_prog cached $p
       if diff -q $BUILD/${p}_ideal.regs $BUILD/${p}_cached.regs >/dev/null; then

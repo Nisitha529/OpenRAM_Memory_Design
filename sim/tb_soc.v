@@ -39,6 +39,16 @@ module tb_soc;
   // Signals every mode provides
   wire        memwritem, memreadm, freeze;
   wire [31:0] aluresultm, writedatam;
+  wire [3:0]  wmaskm;                      // store byte mask (sb / sh / sw)
+
+  // A store writes only the bytes its mask selects
+  function [31:0] merge(input [31:0] old, input [31:0] data, input [3:0] mask);
+    integer b;
+    begin
+      for (b = 0; b < 4; b = b + 1)
+        merge[b*8 +: 8] = mask[b] ? data[b*8 +: 8] : old[b*8 +: 8];
+    end
+  endfunction
 
 `ifdef IDEAL
   // ---------------- perfect memories ----------------
@@ -50,13 +60,14 @@ module tb_soc;
     .clk(clk), .reset(rst),
     .pcf(pcf), .instrf(instrf),
     .memwritem(memwritem), .aluresultm(aluresultm),
-    .writedatam(writedatam), .readdatam(readdatam),
+    .writedatam(writedatam), .wmaskm(wmaskm), .readdatam(readdatam),
     .freeze(1'b0), .imem_addr(), .memreadm(memreadm),
-    .dreq_we(), .dreq_re(), .dreq_addr(), .dreq_wdata()
+    .dreq_we(), .dreq_re(), .dreq_addr(), .dreq_wdata(), .dreq_wmask()
   );
   assign instrf    = image[pcf[17:2]];
   assign readdatam = dmem[aluresultm[17:2]];
-  always @(posedge clk) if (memwritem) dmem[aluresultm[17:2]] <= writedatam;
+  always @(posedge clk) if (memwritem)
+    dmem[aluresultm[17:2]] <= merge(dmem[aluresultm[17:2]], writedatam, wmaskm);
   `define CORE core
 `else
   // ---------------- cache hierarchy + DRAM ----------------
@@ -83,6 +94,7 @@ module tb_soc;
   assign memreadm   = soc.memreadm;
   assign aluresultm = soc.aluresultm;
   assign writedatam = soc.writedatam;
+  assign wmaskm     = soc.wmaskm;
   assign freeze     = soc.freeze;
   `define CORE soc.core
 
@@ -121,7 +133,7 @@ module tb_soc;
   reg [31:0] result;
   always @(posedge clk) if (!rst && memwritem && !freeze && !done) begin
     if (aluresultm[31:28] != 4'h4)          // not a memory-mapped device
-      shadow[aluresultm[17:2]] <= writedatam;
+      shadow[aluresultm[17:2]] <= merge(shadow[aluresultm[17:2]], writedatam, wmaskm);
     if (aluresultm == TOHOST) begin
       done   <= 1;
       result <= writedatam;

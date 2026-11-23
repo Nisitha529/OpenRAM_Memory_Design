@@ -9,6 +9,8 @@ module datapath(
   input             regwritew,
   input      [2:0]  immsrcd,
   input      [3:0]  alucontrole,
+  input      [2:0]  funct3e,      // store size (sb/sh/sw) in execute
+  input      [2:0]  funct3w,      // load size and sign in writeback
   output            eqe,          // TIMING: rs1 == rs2 (forwarded operands)
   output            lte,          // TIMING: rs1 <  rs2, signed
   output            ltue,         // TIMING: rs1 <  rs2, unsigned
@@ -16,7 +18,8 @@ module datapath(
   input      [31:0] instrf,
   output     [31:0] instrd,
   output     [31:0] aluresultm,
-  output     [31:0] writedatam,
+  output     [31:0] writedatam,   // store data in its byte lanes
+  output     [3:0]  wmaskm,       // store byte mask (memory stage)
   input      [31:0] readdatam,
   input      [1:0]  forwardae,
   input      [1:0]  forwardbe,
@@ -34,10 +37,12 @@ module datapath(
   input             freeze,       // CACHE: hold all pipeline registers
   output     [31:0] imem_addr,    // CACHE: fetch address for the next cycle
   output     [31:0] aluresulte,   // CACHE: data address for the next cycle
-  output     [31:0] writedatae    // CACHE: store data for the next cycle
+  output     [31:0] storedatae,   // CACHE: store data for the next cycle (byte lanes)
+  output     [3:0]  wmaske        // CACHE: store byte mask for the next cycle
 );
 
-  wire [31:0] pcd, pce, aluresultw, readdataw;
+  wire [31:0] pcd, pce, aluresultw, readdataw, loaddataw;
+  wire [31:0] writedatae;         // rs2 after forwarding
   wire [31:0] pcnextf, pcplus4f, pcplus4d, pcplus4e, pcplus4m, pcplus4w;
   wire [31:0] pctargete, branjumptargete;
   wire [31:0] immextd, immexte;
@@ -192,17 +197,29 @@ module datapath(
   assign lte  = ($signed(srcaefor) < $signed(writedatae));
   assign ltue = (srcaefor < writedatae);
 
+  // sb / sh / sw: copy rs2 into its byte lanes and build the byte mask.
+  // Only the mask depends on the address (its low two bits).
+  store_align u_store_align(
+    .size      (funct3e[1:0]),
+    .addr      (aluresulte[1:0]),
+    .wdata_in  (writedatae),
+    .wdata     (storedatae),
+    .wmask     (wmaske)
+  );
+
   // ex-mem
   iex_imem u_iex_imem(
     .clk         (clk),
     .reset       (reset),
     .enable      (~freeze),
     .aluresulte  (aluresulte),
-    .writedatae  (writedatae),
+    .writedatae  (storedatae),
+    .wmaske      (wmaske),
     .rde         (rde),
     .pcplus4e    (pcplus4e),
     .aluresulm   (aluresultm),
     .writedatm   (writedatam),
+    .wmaskm      (wmaskm),
     .rdm         (rdm),
     .pcplus4m    (pcplus4m)
   );
@@ -222,9 +239,19 @@ module datapath(
     .pcplus4w    (pcplus4w)
   );
 
+  // lb / lh / lw / lbu / lhu: memory returns the aligned word; pick and extend
+  // the byte or half-word here, after the M/W register, so the logic is not
+  // on the cache's read-data path.
+  load_extend u_load_extend(
+    .funct3  (funct3w),
+    .addr    (aluresultw[1:0]),
+    .rdata   (readdataw),
+    .y       (loaddataw)
+  );
+
   mux3 u_resultmux(
     .d0  (aluresultw),
-    .d1  (readdataw),
+    .d1  (loaddataw),
     .d2  (pcplus4w),
     .s   (resultsrcw),
     .y   (resultw)

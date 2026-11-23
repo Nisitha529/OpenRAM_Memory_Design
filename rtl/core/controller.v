@@ -23,7 +23,9 @@ module controller(
   output       regwritem,
   output       regwritew,
   output [2:0] immsrcd,
-  output [3:0] alucontrole
+  output [3:0] alucontrole,
+  output [2:0] funct3e,       // branch type / store size in execute
+  output [2:0] funct3w        // load size and sign in writeback
 );
 
   wire [1:0] aluopd;
@@ -33,8 +35,8 @@ module controller(
   wire       alusrcad, regwrited, regwritee;
   wire [1:0] alusrcbd;
   wire       branchop;
-  wire [2:0] funct3e;
-  wire       muldivd;         // M extension: not consumed until the mul/div unit exists
+  wire [2:0] funct3m;
+  wire       muldivd;        // M extension: not consumed until the mul/div unit exists
 
   maindec md (
     .op         (op),
@@ -95,9 +97,11 @@ module controller(
     .regwritee   (regwritee),
     .memwritee   (memwritee),
     .resultsrce  (resultsrce),
+    .funct3e     (funct3e),
     .regwritem   (regwritem),
     .memwritem   (memwritem),
-    .resultsrcm  (resultsrcm)
+    .resultsrcm  (resultsrcm),
+    .funct3m     (funct3m)
   );
 
   c_im_iw pipreg_m_to_w (
@@ -106,8 +110,10 @@ module controller(
     .enable      (~freeze),
     .regwritem   (regwritem),
     .resultsrcm  (resultsrcm),
+    .funct3m     (funct3m),
     .regwritew   (regwritew),
-    .resultsrcw  (resultsrcw)
+    .resultsrcw  (resultsrcw),
+    .funct3w     (funct3w)
   );
 
   assign resultsrce0  = resultsrce[0];

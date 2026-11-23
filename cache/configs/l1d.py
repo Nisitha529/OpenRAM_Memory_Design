@@ -6,6 +6,10 @@ words_per_line = 4
 address_size = 16
 num_ways = 1
 write_policy = "write-back"
+# Byte write mask (wmask[3:0]) for sb / sh. OpenCache merges the masked bytes
+# into the line it has read (read-modify-write in the controller), so the data
+# array (sram_128x32_1r1w) itself needs no write mask.
+write_size = 8
 
 output_path = "/media/nisitha/My_Passport/MOODLE/OpenRAM_Project/OpenRAM_Memory_Design/cache/output/"
 output_name = "l1d"

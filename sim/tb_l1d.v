@@ -3,6 +3,7 @@
 // Checks:
 //   1. Every read returns the value a flat "golden" memory says it should.
 //   2. After a flush, DRAM holds all written data (i.e. write-back works).
+// Writes use random byte masks (wmask), plus some full-word writes.
 // Also reports hit/miss counts (a request with no stall cycles is a hit).
 `timescale 1ns/1ps
 module tb_l1d;
@@ -20,6 +21,7 @@ module tb_l1d;
   reg cache_csb = 1, cache_web = 1;
   reg  [ADDR_W-1:0] cache_addr = 0;
   reg  [WORD_W-1:0] cache_din  = 0;
+  reg  [3:0]        cache_wmask = 4'hf;
   wire [WORD_W-1:0] cache_dout;
   wire cache_stall;
 
@@ -32,7 +34,7 @@ module tb_l1d;
   l1d dut (
     .clk(clk), .rst(rst), .flush(flush),
     .csb(cache_csb), .web(cache_web), .addr(cache_addr),
-    .din(cache_din), .dout(cache_dout), .stall(cache_stall),
+    .din(cache_din), .wmask(cache_wmask), .dout(cache_dout), .stall(cache_stall),
     .main_csb(dram_csb), .main_web(dram_web), .main_addr(dram_addr),
     .main_din(dram_din), .main_dout(dram_dout), .main_stall(dram_stall)
   );
@@ -51,6 +53,7 @@ module tb_l1d;
   reg [SET_W-1:0]  s;
   reg [OFF_W-1:0]  o;
   reg [WORD_W-1:0] d;
+  reg [3:0]        m;
   reg is_write;
 
   // Wait out stall cycles; returns number of stalled cycles
@@ -65,9 +68,9 @@ module tb_l1d;
   endtask
 
   // One CPU request: inputs change 1 ns before a posedge, as in OpenCache's own TB
-  task access(input w, input [ADDR_W-1:0] addr, input [WORD_W-1:0] data);
+  task access(input w, input [ADDR_W-1:0] addr, input [WORD_W-1:0] data, input [3:0] mask);
     begin
-      cache_csb = 0; cache_web = !w; cache_addr = addr; cache_din = data;
+      cache_csb = 0; cache_web = !w; cache_addr = addr; cache_din = data; cache_wmask = mask;
       #(CLK_HALF * 2);
       wait_stall(stalls);
       if (stalls == 0) hits = hits + 1; else misses = misses + 1;
@@ -106,12 +109,14 @@ module tb_l1d;
       o = {$random} % 4;
       a = {t, s, o};
       d = $random;
+      m = (i % 4 == 0) ? 4'hf : $random;     // every 4th write a full word
       if (is_write) begin
-        access(1, a, d);
-        golden[a] = d;
+        access(1, a, d, m);
+        for (n = 0; n < 4; n = n + 1)
+          if (m[n]) golden[a][n*8 +: 8] = d[n*8 +: 8];
         writes = writes + 1;
       end else begin
-        access(0, a, 0);
+        access(0, a, 0, 4'hf);
         reads = reads + 1;
       end
     end

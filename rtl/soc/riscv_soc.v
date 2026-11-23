@@ -27,6 +27,9 @@
 //   0x4001_0004                CYCLES   free-running cycle counter (read)
 // Memory-mapped accesses: SYSCTRL answers in the next cycle; the accelerator's
 // requests are registered first, so its reads take one extra (frozen) cycle.
+// Memory takes byte and half-word stores (the L1D has a byte write mask). The
+// memory-mapped devices ignore the mask: use only lw / sw on them (an sb / sh
+// would write its byte or half-word copied into every lane of the word).
 //
 // The accelerator's DMA reads and writes at the L2, below the L1D. Software
 // keeps them coherent: flush L1D before a DMA job (A and B may still be dirty
@@ -65,6 +68,7 @@ module riscv_soc (
   wire [31:0] pcf, instrf, readdatam, imem_addr;
   wire [31:0] dreq_addr, dreq_wdata;
   wire [31:0] aluresultm, writedatam;
+  wire [3:0]  dreq_wmask, wmaskm;
   wire        dreq_we, dreq_re, memwritem, memreadm;
   wire        freeze;
 
@@ -76,6 +80,7 @@ module riscv_soc (
     .memwritem   (memwritem),
     .aluresultm  (aluresultm),
     .writedatam  (writedatam),
+    .wmaskm      (wmaskm),
     .readdatam   (readdatam),
     .freeze      (freeze),
     .imem_addr   (imem_addr),
@@ -83,7 +88,8 @@ module riscv_soc (
     .dreq_we     (dreq_we),
     .dreq_re     (dreq_re),
     .dreq_addr   (dreq_addr),
-    .dreq_wdata  (dreq_wdata)
+    .dreq_wdata  (dreq_wdata),
+    .dreq_wmask  (dreq_wmask)
   );
 
   // ---------------- address decode ----------------
@@ -131,6 +137,7 @@ module riscv_soc (
     .web        (~dreq_we),
     .addr       (dreq_addr[17:2]),
     .din        (dreq_wdata),
+    .wmask      (dreq_wmask),             // byte write mask (sb / sh)
     .dout       (d_dout),
     .stall      (d_stall),
     .main_csb   (d_main_csb),
