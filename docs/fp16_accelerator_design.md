@@ -8,7 +8,7 @@ the matching testbenches and software
 **Related:** [low_power_proposal.md](low_power_proposal.md): clock gating, zero skipping and matrix
 reductions for the same accelerator
 
----
+--------
 
 ## 1. Summary
 
